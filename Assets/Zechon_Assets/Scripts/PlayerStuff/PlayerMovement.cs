@@ -23,7 +23,11 @@ public class PlayerMovement : NetworkBehaviour
     private bool isGrounded;
     private bool jumpQueued;
     private float playerHeight;
-    private float verticalVelocity;
+
+    private NetworkVariable<Vector3> NetworkPosition = new NetworkVariable<Vector3>(
+        writePerm: NetworkVariableWritePermission.Owner);
+    private NetworkVariable<Vector3> NetworkVelocity = new NetworkVariable<Vector3>(
+        writePerm: NetworkVariableWritePermission.Owner);
 
     private void Awake()
     {
@@ -50,16 +54,20 @@ public class PlayerMovement : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (!IsOwner) return;
-
-        CheckGrounded();
-
-        Move();
-
-        if (jumpQueued && isGrounded)
+        if (IsOwner)
         {
-            jumpQueued = false;
-            TryJump();
+            CheckGrounded();
+
+            HandleMovement();
+            HandleJump();
+
+            NetworkPosition.Value = rb.position;
+            NetworkVelocity.Value = rb.linearVelocity;
+        }
+        else
+        {
+            rb.position = Vector3.Lerp(rb.position, NetworkPosition.Value, 0.5f);
+            rb.linearVelocity = NetworkVelocity.Value;
         }
     }
 
@@ -68,7 +76,7 @@ public class PlayerMovement : NetworkBehaviour
         isGrounded = Physics.Raycast(transform.position, Vector3.down, playerHeight + groundCheckOffset, thisIsGround);
     }
 
-    private void Move()
+    private void HandleMovement()
     {
         Vector3 moveDir = new Vector3(moveInput.x, 0, moveInput.y).normalized;
         Vector3 delta = transform.TransformDirection(moveDir) * moveSpeed;
@@ -79,16 +87,16 @@ public class PlayerMovement : NetworkBehaviour
         rb.linearVelocity = velocity;
     }
 
-    private void TryJump()
+    private void HandleJump()
     {
-        JumpServerRpc();
-        ApplyJumpLocal();
+        if (jumpQueued && isGrounded)
+        {
+            jumpQueued = false;
+            ApplyJump();
+        }
     }
 
-    private void ApplyJumpLocal() => rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-
-    [ServerRpc]
-    private void JumpServerRpc()
+    private void ApplyJump()
     {
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
     }
