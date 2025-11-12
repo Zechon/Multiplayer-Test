@@ -52,7 +52,7 @@ MonoBehaviour:
     PlayerPrefab: {fileID: 3223632754110538074, guid: 7bf36a1ed74c1cf459bc7bb74d0d54a1, type: 3}
     Prefabs:
       NetworkPrefabsLists: []
-    TickRate: 30
+    TickRate: 60
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 0
     ConnectionData: 
@@ -98,7 +98,7 @@ MonoBehaviour:
   m_DisconnectTimeoutMS: 30000
   ConnectionData:
     Address: 127.0.0.1
-    Port: 9999
+    Port: 7777
     ServerListenAddress: 127.0.0.1
   DebugSimulator:
     PacketDelayMS: 0

@@ -21,12 +21,13 @@ public class UsernameHandler : NetworkBehaviour
 
     private void Start()
     {
+
         NetworkUsername.OnValueChanged += (oldValue, newValue) =>
         {
             usernameText.text = newValue.ToString();
         };
 
         usernameText.text = NetworkUsername.Value.ToString();
-    }
 
+    }
 }

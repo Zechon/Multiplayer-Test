@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 8024652925701433758}
   - component: {fileID: 5454802769581869574}
   - component: {fileID: 4568906519037588269}
+  - component: {fileID: 4602219477396785227}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -188,9 +189,9 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   NetworkTransformExpanded: 0
   AutoOwnerAuthorityTickOffset: 1
-  PositionInterpolationType: 0
-  RotationInterpolationType: 0
-  ScaleInterpolationType: 0
+  PositionInterpolationType: 2
+  RotationInterpolationType: 2
+  ScaleInterpolationType: 2
   PositionLerpSmoothing: 1
   PositionMaxInterpolationTime: 0.1
   RotationLerpSmoothing: 1
@@ -269,6 +270,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UsernameHandler
   ShowTopMostFoldoutHeaderGroup: 1
   usernameText: {fileID: 1221212302333886437}
+--- !u!114 &4602219477396785227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3223632754110538074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 347bb9ed0d4cc1d4e84b3bcd3fca5fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UsernameBillboard
 --- !u!1 &5235528858565849833
 GameObject:
   m_ObjectHideFlags: 0
@@ -283,7 +296,7 @@ GameObject:
   - component: {fileID: 2274522859749996306}
   m_Layer: 0
   m_Name: Camera
-  m_TagString: Untagged
+  m_TagString: PlayerCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -556,7 +569,7 @@ GameObject:
   - component: {fileID: 5943829573470811164}
   m_Layer: 0
   m_Name: Canvas
-  m_TagString: Untagged
+  m_TagString: nametag
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

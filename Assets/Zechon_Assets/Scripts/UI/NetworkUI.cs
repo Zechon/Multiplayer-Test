@@ -2,15 +2,23 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Unity.Netcode.Transports.UTP;
+using System.Net;
+using System.Net.Sockets;
+using System.Net.NetworkInformation;
 
 public class NetworkUI : MonoBehaviour
 {
+    [Header("Network Manager")]
+    public UnityTransport ntwk;
+
     [Header("UI References (Assign in Inspector)")]
     public Button hostButton;
     public Button clientButton;
-    public Button serverButton;
     public TMP_Text statusLabel;
     public TMP_InputField usernameInput;
+    public TMP_InputField portInput;
+    public TMP_InputField ipInput;
 
     [Header("Spawn Info")]
     public Vector3 spawnPosition;
@@ -19,25 +27,45 @@ public class NetworkUI : MonoBehaviour
     {
         hostButton.onClick.AddListener(OnHostButtonClicked);
         clientButton.onClick.AddListener(OnClientButtonClicked);
-        serverButton.onClick.AddListener(OnServerButtonClicked);
+
+        if (ipInput != null)
+            ipInput.text = GetLocalIPAddress();
+
+        if (portInput != null)
+            portInput.text = "7777";
     }
 
     private void OnDisable()
     {
         hostButton.onClick.RemoveListener(OnHostButtonClicked);
         clientButton.onClick.RemoveListener(OnClientButtonClicked);
-        serverButton.onClick.RemoveListener(OnServerButtonClicked);
     }
 
     private void OnHostButtonClicked()
     {
+        string hostIp = GetLocalIPAddress();
+        ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
+
+        ntwk.SetConnectionData(hostIp, port);
+
         NetworkManager.Singleton.StartHost();
+
+
+        Debug.Log($"[Host] Hosting on {hostIp}:{port}");
+
+        if (ipInput != null)
+            ipInput.text = hostIp;
 
         SendUsernameToPlayer();
     }
 
     private void OnClientButtonClicked()
     {
+        string ip = string.IsNullOrEmpty(ipInput.text) ? "127.0.0.1" : ipInput.text;
+        ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
+
+        ntwk.SetConnectionData(ip, port);
+
         NetworkManager.Singleton.StartClient();
 
         NetworkManager.Singleton.OnClientConnectedCallback += id =>
@@ -45,11 +73,6 @@ public class NetworkUI : MonoBehaviour
             if (id == NetworkManager.Singleton.LocalClientId)
                 SendUsernameToPlayer();
         };
-    }
-
-    private void OnServerButtonClicked()
-    {
-        NetworkManager.Singleton.StartServer();
     }
 
     private void SendUsernameToPlayer()
@@ -101,8 +124,8 @@ public class NetworkUI : MonoBehaviour
     {
         hostButton.gameObject.SetActive(state);
         clientButton.gameObject.SetActive(state);
-        serverButton.gameObject.SetActive(state);
         usernameInput.gameObject.SetActive(state);
+        portInput.gameObject.SetActive(state);
     }
 
     private void SetStatusText(string text)
@@ -134,4 +157,26 @@ public class NetworkUI : MonoBehaviour
         };
     }
 
+    private string GetLocalIPAddress()
+    {
+        foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
+        {
+            if (ni.OperationalStatus != OperationalStatus.Up)
+                continue;
+
+            foreach (UnicastIPAddressInformation ip in ni.GetIPProperties().UnicastAddresses)
+            {
+                if (ip.Address.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    if (!IPAddress.IsLoopback(ip.Address))
+                    {
+                        return ip.Address.ToString();
+                    }
+                }
+            }
+        }
+
+        Debug.LogWarning("No valid LAN IPv4 address found, defaulting to 127.0.0.1");
+        return "127.0.0.1";
+    }
 }
