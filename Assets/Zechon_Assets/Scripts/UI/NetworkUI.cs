@@ -6,6 +6,8 @@ using Unity.Netcode.Transports.UTP;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
 
 public class NetworkUI : MonoBehaviour
 {
@@ -23,11 +25,17 @@ public class NetworkUI : MonoBehaviour
     [Header("Spawn Info")]
     public Vector3 spawnPosition;
 
+    private async void Awake()
+    {
+        SetLANButtons(false);
+
+        await UnityServices.InitializeAsync();
+        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        Debug.Log("[Unity Services] Authenticated as: " + AuthenticationService.Instance.PlayerId);
+    }
+
     private void OnEnable()
     {
-        hostButton.onClick.AddListener(OnHostButtonClicked);
-        clientButton.onClick.AddListener(OnClientButtonClicked);
-
         if (ipInput != null)
             ipInput.text = GetLocalIPAddress();
 
@@ -35,13 +43,8 @@ public class NetworkUI : MonoBehaviour
             portInput.text = "7777";
     }
 
-    private void OnDisable()
-    {
-        hostButton.onClick.RemoveListener(OnHostButtonClicked);
-        clientButton.onClick.RemoveListener(OnClientButtonClicked);
-    }
 
-    private void OnHostButtonClicked()
+    public void OnHostButtonClickedLAN()
     {
         string hostIp = GetLocalIPAddress();
         ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
@@ -49,7 +52,6 @@ public class NetworkUI : MonoBehaviour
         ntwk.SetConnectionData(hostIp, port);
 
         NetworkManager.Singleton.StartHost();
-
 
         Debug.Log($"[Host] Hosting on {hostIp}:{port}");
 
@@ -59,7 +61,7 @@ public class NetworkUI : MonoBehaviour
         SendUsernameToPlayer();
     }
 
-    private void OnClientButtonClicked()
+    public void OnClientButtonClickedLAN()
     {
         string ip = string.IsNullOrEmpty(ipInput.text) ? "127.0.0.1" : ipInput.text;
         ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
@@ -103,29 +105,27 @@ public class NetworkUI : MonoBehaviour
     {
         if (NetworkManager.Singleton == null)
         {
-            SetStartButtons(false);
             SetStatusText("NetworkManager not found");
             return;
         }
 
         if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
         {
-            SetStartButtons(true);
             SetStatusText("Not connected");
         }
         else
         {
-            SetStartButtons(false);
             UpdateStatusLabels();
         }
     }
 
-    private void SetStartButtons(bool state)
+    private void SetLANButtons(bool state)
     {
         hostButton.gameObject.SetActive(state);
         clientButton.gameObject.SetActive(state);
         usernameInput.gameObject.SetActive(state);
         portInput.gameObject.SetActive(state);
+        ipInput.gameObject.SetActive(state);
     }
 
     private void SetStatusText(string text)
@@ -178,5 +178,10 @@ public class NetworkUI : MonoBehaviour
 
         Debug.LogWarning("No valid LAN IPv4 address found, defaulting to 127.0.0.1");
         return "127.0.0.1";
+    }
+
+    public void lanChosen()
+    {
+        SetLANButtons(true);
     }
 }
