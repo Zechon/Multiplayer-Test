@@ -8,26 +8,32 @@ public class UsernameHandler : NetworkBehaviour
     [Header("UI Reference")]
     public TMP_Text usernameText;
 
-    private NetworkVariable<FixedString128Bytes> NetworkUsername = new NetworkVariable<FixedString128Bytes>(
-        writePerm: NetworkVariableWritePermission.Owner,
-        readPerm: NetworkVariableReadPermission.Everyone
-    );
+    private NetworkVariable<FixedString128Bytes> NetworkUsername
+        = new NetworkVariable<FixedString128Bytes>(
+            writePerm: NetworkVariableWritePermission.Server,
+            readPerm: NetworkVariableReadPermission.Everyone
+        );
 
-    public void SetUsername(string username)
+    public void RequestSetUsername(string username)
     {
-        if (!IsOwner) return;
-        NetworkUsername.Value = new FixedString128Bytes(username);
+        if (IsOwner)
+            SubmitUsernameServerRpc(username);
+    }
+
+    [ServerRpc]
+    private void SubmitUsernameServerRpc(string username, ServerRpcParams rpc = default)
+    {
+        NetworkUsername.Value = username;
     }
 
     private void Start()
     {
-
         NetworkUsername.OnValueChanged += (oldValue, newValue) =>
         {
-            usernameText.text = newValue.ToString();
+            if (usernameText != null)
+                usernameText.text = newValue.ToString();
         };
 
         usernameText.text = NetworkUsername.Value.ToString();
-
     }
 }

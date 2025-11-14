@@ -120,7 +120,7 @@ public class NetworkUI : MonoBehaviour
         var handler = player.GetComponent<UsernameHandler>();
         if (handler != null)
         {
-            handler.SetUsername(username);
+            handler.RequestSetUsername(username);
         }
     }
 
@@ -270,18 +270,23 @@ public class NetworkUI : MonoBehaviour
     {
         JoinAllocation a = await RelayService.Instance.JoinAllocationAsync(_joinInput.text);
 
-        _transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port, a.AllocationIdBytes, a.Key, a.ConnectionData, a.HostConnectionData);
+        _transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port,
+            a.AllocationIdBytes, a.Key, a.ConnectionData, a.HostConnectionData);
+
+        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
         NetworkManager.Singleton.StartClient();
-
-        NetworkManager.Singleton.OnClientConnectedCallback += id =>
-        {
-            if (id == NetworkManager.Singleton.LocalClientId)
-                SendUsernameToPlayer();
-        };
 
         ModeButtonsToggle(false);
         SetLANButtons(false);
         SetOButtons(false);
+    }
+
+    private void OnClientConnected(ulong id)
+    {
+        if (id == NetworkManager.Singleton.LocalClientId)
+        {
+            SendUsernameToPlayer();
+        }
     }
 }
