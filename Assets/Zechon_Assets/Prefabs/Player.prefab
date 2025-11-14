@@ -238,7 +238,7 @@ MonoBehaviour:
   gravityMultiplier: 2
   thisIsGround:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   groundCheckOffset: 0.1
 --- !u!114 &5454802769581869574
 MonoBehaviour:
