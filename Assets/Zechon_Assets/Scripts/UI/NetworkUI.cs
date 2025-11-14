@@ -8,6 +8,10 @@ using System.Net.Sockets;
 using System.Net.NetworkInformation;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
+using System.Net.Security;
+using Unity.Services.Relay;
+using System.Threading.Tasks;
+using Unity.Services.Relay.Models;
 
 public class NetworkUI : MonoBehaviour
 {
@@ -17,20 +21,38 @@ public class NetworkUI : MonoBehaviour
     [Header("UI References (Assign in Inspector)")]
     public Button hostButton;
     public Button clientButton;
+    public Button lanButton;
+    public Button onlineButton;
     public TMP_Text statusLabel;
     public TMP_InputField usernameInput;
     public TMP_InputField portInput;
     public TMP_InputField ipInput;
 
+    [Header("Online Stuff")]
+    public TMP_Text joinCode;
+    public TMP_InputField _joinInput;
+    public Button _oHost;
+    public Button _oJoin;
+
     [Header("Spawn Info")]
     public Vector3 spawnPosition;
+    public int MaxPlayers = 4;
+
+    [SerializeField] private UnityTransport _transport;
 
     private async void Awake()
     {
         SetLANButtons(false);
+        SetOButtons(false);
 
+        await Authenticate();
+    }
+
+    private static async Task Authenticate()
+    {
         await UnityServices.InitializeAsync();
         await AuthenticationService.Instance.SignInAnonymouslyAsync();
+
         Debug.Log("[Unity Services] Authenticated as: " + AuthenticationService.Instance.PlayerId);
     }
 
@@ -59,6 +81,9 @@ public class NetworkUI : MonoBehaviour
             ipInput.text = hostIp;
 
         SendUsernameToPlayer();
+
+        ModeButtonsToggle(false);
+        SetLANButtons(false);
     }
 
     public void OnClientButtonClickedLAN()
@@ -75,6 +100,9 @@ public class NetworkUI : MonoBehaviour
             if (id == NetworkManager.Singleton.LocalClientId)
                 SendUsernameToPlayer();
         };
+
+        ModeButtonsToggle(false);
+        SetLANButtons(false);
     }
 
     private void SendUsernameToPlayer()
@@ -143,7 +171,20 @@ public class NetworkUI : MonoBehaviour
 
         string modeText = "Mode: " + mode;
 
-        SetStatusText($"{modeText}");
+        if (mode == "Host")
+        {
+            string hostIp = GetLocalIPAddress();
+            ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
+            SetStatusText($"{modeText} | {hostIp} | {port}");
+        }
+
+        else
+        {
+            string ip = string.IsNullOrEmpty(ipInput.text) ? "127.0.0.1" : ipInput.text;
+            ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
+            SetStatusText($"{modeText} | {ip} | {port}");
+        }
+        
     }
     private void Start()
     {
@@ -183,5 +224,64 @@ public class NetworkUI : MonoBehaviour
     public void lanChosen()
     {
         SetLANButtons(true);
+        SetOButtons(false);
+        ModeButtonsToggle(false);
+    }
+
+    public void OnlineChosen()
+    {
+        SetLANButtons(false);
+        SetOButtons(true);
+        ModeButtonsToggle(false);
+    }
+
+    private void SetOButtons(bool state)
+    {
+        _oHost.gameObject.SetActive(state);
+        _oJoin.gameObject.SetActive(state);
+        usernameInput.gameObject.SetActive(state);
+        _joinInput.gameObject.SetActive(state);
+    }
+
+
+    private void ModeButtonsToggle(bool state)
+    {
+        lanButton.gameObject.SetActive(state);
+        onlineButton.gameObject.SetActive(state);
+    }
+
+    public async void HostGame()
+    {
+        Allocation a = await RelayService.Instance.CreateAllocationAsync(MaxPlayers);
+        joinCode.text = await RelayService.Instance.GetJoinCodeAsync(a.AllocationId);
+
+        _transport.SetHostRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port, a.AllocationIdBytes, a.Key, a.ConnectionData);
+
+        NetworkManager.Singleton.StartHost();
+
+        SendUsernameToPlayer();
+
+        ModeButtonsToggle(false);
+        SetLANButtons(false);
+        SetOButtons(false);
+    }
+
+    public async void JoinGame()
+    {
+        JoinAllocation a = await RelayService.Instance.JoinAllocationAsync(_joinInput.text);
+
+        _transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port, a.AllocationIdBytes, a.Key, a.ConnectionData, a.HostConnectionData);
+
+        NetworkManager.Singleton.StartClient();
+
+        NetworkManager.Singleton.OnClientConnectedCallback += id =>
+        {
+            if (id == NetworkManager.Singleton.LocalClientId)
+                SendUsernameToPlayer();
+        };
+
+        ModeButtonsToggle(false);
+        SetLANButtons(false);
+        SetOButtons(false);
     }
 }
