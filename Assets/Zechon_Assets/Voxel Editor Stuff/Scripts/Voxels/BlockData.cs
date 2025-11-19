@@ -17,23 +17,31 @@ public class BlockData : ScriptableObject
 
     public bool isSolid = true;
 
-    public Texture2D GetTextureForFace(Face face)
+    [HideInInspector] public int topTexIndex = -1;
+    [HideInInspector] public int bottomTexIndex = -1;
+    [HideInInspector] public int sideTexIndex = -1;
+
+    [HideInInspector] public int topNormalIndex = -1;
+    [HideInInspector] public int bottomNormalIndex = -1;
+    [HideInInspector] public int sideNormalIndex = -1;
+
+    public int GetTextureIndex(Face face)
     {
         switch (face)
         {
-            case Face.Top: return topTexture;
-            case Face.Bottom: return bottomTexture;
-            default: return sideTexture;
+            case Face.Top: return topTexIndex;
+            case Face.Bottom: return bottomTexIndex;
+            default: return sideTexIndex;
         }
     }
 
-    public Texture2D GetNormalForFace(Face face)
+    public int GetNormalIndex(Face face)
     {
         switch (face)
         {
-            case Face.Top: return topNormal;
-            case Face.Bottom: return bottomNormal;
-            default: return sideNormal;
+            case Face.Top: return topNormalIndex;
+            case Face.Bottom: return bottomNormalIndex;
+            default: return sideNormalIndex;
         }
     }
 }
