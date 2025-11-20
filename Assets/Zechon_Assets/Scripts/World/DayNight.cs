@@ -41,7 +41,7 @@ public class DayNight : NetworkBehaviour
     {
         // Sun rotation: 0 = sunrise, 180 = sunset, 90 = noon
         float sunAngle = t * 360f - 90f; // same as before
-        sunLight.transform.rotation = Quaternion.Euler(sunAngle, 170f, 0f);
+        sunLight.transform.rotation = Quaternion.Euler(sunAngle, 0f, 0f);
 
         // Intensity multiplier peaks at noon (x = 90°)
         // Map t = 0.25 (90°) -> cos(0) = 1

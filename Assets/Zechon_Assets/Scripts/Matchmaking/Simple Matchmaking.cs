@@ -55,7 +55,7 @@ public class SimpleMatchmaking : MonoBehaviour
             NetworkManager.Singleton.StartClient();
             return lobby;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             Debug.Log($"No lobbies available via quick join");
             return null;
@@ -84,7 +84,7 @@ public class SimpleMatchmaking : MonoBehaviour
             NetworkManager.Singleton.StartHost();
             return lobby;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             Debug.LogFormat("Failed creating a lobby");
             return null;
