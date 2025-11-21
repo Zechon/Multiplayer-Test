@@ -10,13 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5d58db16abe430045ad02528affaff74, type: 3}
-  m_Name: Grass_Full
+  m_Name: Full_Grass
   m_EditorClassIdentifier: Assembly-CSharp::BlockClass
   blockName: Full Grass Block
   blockFaceTextures:
   - {fileID: 2800000, guid: 549cc1987d195b44eb395289c113ad83, type: 3}
   - {fileID: 2800000, guid: 549cc1987d195b44eb395289c113ad83, type: 3}
   - {fileID: 2800000, guid: 549cc1987d195b44eb395289c113ad83, type: 3}
-  - {fileID: 2800000, guid: 549cc1987d195b44eb395289c113ad83, type: 3}
-  - {fileID: 2800000, guid: 549cc1987d195b44eb395289c113ad83, type: 3}
-  - {fileID: 2800000, guid: 549cc1987d195b44eb395289c113ad83, type: 3}
+  blockFaceNormalMaps:
+  - {fileID: 2800000, guid: 6d0c2fc0c1155894bb010f4cbfdec0e3, type: 3}
+  - {fileID: 2800000, guid: 6d0c2fc0c1155894bb010f4cbfdec0e3, type: 3}
+  - {fileID: 2800000, guid: 6d0c2fc0c1155894bb010f4cbfdec0e3, type: 3}

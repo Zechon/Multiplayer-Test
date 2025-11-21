@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d58db16abe430045ad02528affaff74, type: 3}
+  m_Name: Grass
+  m_EditorClassIdentifier: Assembly-CSharp::BlockClass
+  blockName: Grass Block
+  blockFaceTextures:
+  - {fileID: 2800000, guid: c4b431a24dc0e4a4eb3596ef0709227c, type: 3}
+  - {fileID: 2800000, guid: 1d3277dace11a154b98c6dec7036c651, type: 3}
+  - {fileID: 2800000, guid: 118b3e92ae56ee44a885a49bdea8ac38, type: 3}
+  blockFaceNormalMaps:
+  - {fileID: 2800000, guid: 06d98d348976d70459d203c05837ad65, type: 3}
+  - {fileID: 2800000, guid: 6d0c2fc0c1155894bb010f4cbfdec0e3, type: 3}
+  - {fileID: 2800000, guid: 7631f0d877a8f154b8b788cb7f3f1079, type: 3}

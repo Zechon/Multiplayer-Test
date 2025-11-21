@@ -6,6 +6,9 @@ public class BlockClass : ScriptableObject
 {
     public string blockName;
 
-    [Tooltip("front, back, right, left, top, bottom")]
+    [Tooltip("side, top, bottom")]
     public Texture2D[] blockFaceTextures;
+
+    [Tooltip("side, top, bottom normal maps")]
+    public Texture2D[] blockFaceNormalMaps;
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using TreeEditor;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class Voxel : MonoBehaviour
@@ -17,6 +18,9 @@ public class Voxel : MonoBehaviour
     public List<Vector2> uvs;
 
     public Vector3 cubeSize = Vector3.one * 0.5f;
+
+    private int texWidth;
+    private int numTexs;
 
     private static readonly Vector3[] faceDirs = {
         Vector3.forward, Vector3.back,
@@ -53,15 +57,32 @@ public class Voxel : MonoBehaviour
 
         mesh.vertices = verts.ToArray();
         mesh.triangles = tris.ToArray();
-        mesh.SetUVs(0, uvs.ToArray());
+        mesh.SetUVs(0, uvs);
         mesh.RecalculateNormals();
 
         GetComponent<MeshFilter>().mesh = mesh;
+        GetComponent<Renderer>().material.mainTexture = texAtlas;
     }
 
     void DrawTexAtlas()
     {
-        texAtlas = new Texture2D(blockClass.blockFaceTextures[0].width * 6, blockClass.blockFaceTextures[0].width * 6);
+        texWidth = blockClass.blockFaceTextures[0].width;
+        texAtlas = new Texture2D(texWidth * 3, texWidth * 3);
+        numTexs = blockClass.blockFaceTextures.Length;
+
+        for (int t = 0; t < numTexs; t++)
+        {
+            for (int x = 0; x < texWidth ; x++)
+            {
+                for (int y = 0; y < texWidth; y++)
+                {
+                    texAtlas.SetPixel(x + (texWidth * t),y, blockClass.blockFaceTextures[t].GetPixel(x,y));
+                }
+            }
+        }
+
+        texAtlas.filterMode = FilterMode.Point;
+        texAtlas.Apply();
     }
 
     void DrawBlock()
@@ -91,10 +112,15 @@ public class Voxel : MonoBehaviour
         tris.Add(lastVertex + 3);
         tris.Add(lastVertex + 2);
 
-        // Add placeholder UVs (all 0s for now)
-        uvs.Add(Vector2.zero);
-        uvs.Add(Vector2.zero);
-        uvs.Add(Vector2.zero);
-        uvs.Add(Vector2.zero);
+        int[] faceToTexture = { 0, 0, 0, 0, 1, 2 };
+        int texIndex = faceToTexture[faceIndex];
+
+        float tileSize = 1f / numTexs;
+        float xOffset = texIndex * tileSize;
+
+        uvs.Add(new Vector2(xOffset, 0));
+        uvs.Add(new Vector2(xOffset, tileSize));
+        uvs.Add(new Vector2(xOffset + tileSize, tileSize));
+        uvs.Add(new Vector2(xOffset + tileSize, 0));
     }
 }
