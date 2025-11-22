@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using static UnityEditor.PlayerSettings;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class Chunk : MonoBehaviour
@@ -14,9 +13,11 @@ public class Chunk : MonoBehaviour
 
     public float cubeSize = 0.5f;
 
-    private int numTexs;
+    public int numTexs;
 
     public BlockManager blockManager;
+
+    public Vector3Int chunkCoord; // assigned by VoxelWorld
 
     private static readonly Vector3[] faceDirs = {
     Vector3.forward, Vector3.back,
@@ -49,8 +50,8 @@ public class Chunk : MonoBehaviour
             for (int y = 0; y < VoxelData.ChunkSize; y++)
                 for (int z = 0; z < VoxelData.ChunkSize; z++)
                 {
-                    if (y < 4) blocks[x, y, z] = 1; // floor
-                    else if (y >= 4 && y < 10) blocks[x, y, z] = 2;
+                    if (y < 6) blocks[x, y, z] = 1; // floor
+                    else if (y >= 6 && y < 10) blocks[x, y, z] = 2;
                     else if (y == 10) blocks[x, y, z] = 3;
                 }
 
@@ -59,7 +60,7 @@ public class Chunk : MonoBehaviour
         int pyramidBaseSize = 8;
         int pyramidHeight = 5;
         int startY = 11;
-        int blockID = 5;
+        int blockID = 6;
 
         for (int layer = 0; layer < pyramidHeight; layer++)
         {
@@ -78,15 +79,17 @@ public class Chunk : MonoBehaviour
 
     bool IsVoxelSolid(int x, int y, int z)
     {
-        if (x < 0 || x >= VoxelData.ChunkSize ||
-            y < 0 || y >= VoxelData.ChunkSize ||
-            z < 0 || z >= VoxelData.ChunkSize)
-            return false;
+        int cs = VoxelWorld.Instance.chunkSize;
 
-        return blocks[x, y, z] != 0;
+        int gx = chunkCoord.x * cs + x;
+        int gy = chunkCoord.y * cs + y;
+        int gz = chunkCoord.z * cs + z;
+
+        return VoxelWorld.Instance.GetBlock(gx, gy, gz) != 0;
     }
 
-    void GenerateChunkMesh()
+
+    public void GenerateChunkMesh()
     {
         verts.Clear();
         tris.Clear();
@@ -161,13 +164,29 @@ public class Chunk : MonoBehaviour
         uvs.Add(new Vector2(xOffset + tileSizeU, yOffset));   // bottom-right
     }
 
-    void ApplyMesh()
+    public void ApplyMesh()
     {
         mesh.Clear();
-        mesh.vertices = verts.ToArray();
-        mesh.triangles = tris.ToArray();
+
+        if (verts.Count > 65000)
+            mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+
+        mesh.SetVertices(verts);
+        mesh.SetTriangles(tris, 0);
         mesh.SetUVs(0, uvs);
         mesh.RecalculateNormals();
-        GetComponent<MeshFilter>().mesh = mesh;
+        mesh.RecalculateBounds();
+        mesh.MarkDynamic();
+
+        GetComponent<MeshFilter>().sharedMesh = mesh;
+
+        // CREATE COLLISION
+        MeshCollider mc = GetComponent<MeshCollider>();
+        if (mc == null)
+            mc = gameObject.AddComponent<MeshCollider>();
+
+        mc.sharedMesh = null;
+        mc.sharedMesh = mesh;
     }
+
 }

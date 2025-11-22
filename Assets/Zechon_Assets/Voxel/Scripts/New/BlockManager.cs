@@ -38,7 +38,7 @@ public class BlockManager : MonoBehaviour
         int numBlocks = allBlocks.Length;
 
         normalAtlas = new Texture2D(tileSize * numBlocks, tileSize * 3);
-        normalAtlas.filterMode = FilterMode.Point;
+        normalAtlas.filterMode = FilterMode.Bilinear;
 
         for (int i = 0; i < numBlocks; i++)
         {
@@ -54,7 +54,6 @@ public class BlockManager : MonoBehaviour
                     }
             }
         }
-
         normalAtlas.Apply();
     }
 }

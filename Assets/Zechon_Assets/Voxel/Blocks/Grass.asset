@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BlockClass
   blockName: Grass Block
   blockFaceTextures:
-  - {fileID: 2800000, guid: c4b431a24dc0e4a4eb3596ef0709227c, type: 3}
-  - {fileID: 2800000, guid: 1d3277dace11a154b98c6dec7036c651, type: 3}
-  - {fileID: 2800000, guid: 118b3e92ae56ee44a885a49bdea8ac38, type: 3}
+  - {fileID: 2800000, guid: b81a02fc78243fe46ad2367dcee01907, type: 3}
+  - {fileID: 2800000, guid: 549cc1987d195b44eb395289c113ad83, type: 3}
+  - {fileID: 2800000, guid: d30f2886d0b09214d84fec7eb45868ee, type: 3}
   blockFaceNormalMaps:
   - {fileID: 2800000, guid: 06d98d348976d70459d203c05837ad65, type: 3}
   - {fileID: 2800000, guid: 6d0c2fc0c1155894bb010f4cbfdec0e3, type: 3}
