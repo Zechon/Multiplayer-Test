@@ -21,13 +21,15 @@ public class BlockManager : MonoBehaviour
             for (int face = 0; face < 3; face++)
             {
                 Texture2D tex = b.blockFaceTextures[face];
+                int texHeight = b.isSlab && face == 0 ? tileSize / 2 : tileSize; // sides half height for slabs
                 for (int x = 0; x < tileSize; x++)
-                    for (int y = 0; y < tileSize; y++)
+                    for (int y = 0; y < texHeight; y++)
                         atlas.SetPixel(x + tileSize * i, y + tileSize * face, tex.GetPixel(x, y));
             }
 
-            atlas.Apply();
         }
+
+        atlas.Apply();
     }
 
     public Texture2D normalAtlas;
@@ -47,11 +49,10 @@ public class BlockManager : MonoBehaviour
             for (int face = 0; face < 3; face++)
             {
                 Texture2D tex = b.blockFaceNormalMaps[face];
+                int texHeight = b.isSlab && face == 0 ? tileSize / 2 : tileSize;
                 for (int x = 0; x < tileSize; x++)
-                    for (int y = 0; y < tileSize; y++)
-                    {
-                        normalAtlas.SetPixel(x + i * tileSize, y + face * tileSize, tex.GetPixel(x, y));
-                    }
+                    for (int y = 0; y < texHeight; y++)
+                        normalAtlas.SetPixel(x + tileSize * i, y + tileSize * face, tex.GetPixel(x, y));
             }
         }
         normalAtlas.Apply();

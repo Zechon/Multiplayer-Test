@@ -10,6 +10,8 @@ public class VoxelWorld : MonoBehaviour
     public BlockManager blockManager;
     public Material blockMaterial;
 
+    public WorldGenerator gen;
+
     // holds all loaded chunks
     private Dictionary<Vector3Int, Chunk> chunks = new();
 
@@ -25,12 +27,38 @@ public class VoxelWorld : MonoBehaviour
 
     void Start()
     {
-        for (int x = 0; x < initialSize.x; x++)
-            for (int y = 0; y < initialSize.y; y++)
-                for (int z = 0; z < initialSize.z; z++)
+        if (initialSize.x <= 0 || initialSize.z <= 0 || initialSize.y <= 0)
+        {
+            Debug.LogWarning("Initial size must be positive!");
+            return;
+        }
+
+        int radiusX = initialSize.x / 2;
+        int radiusZ = initialSize.z / 2;
+        int radius = Mathf.Max(radiusX, radiusZ);
+
+        // Compute the vertical offset so that the chunk containing groundHeight is at y = 0
+        int chunksAboveSurface = Mathf.CeilToInt((float)initialSize.y / 2);
+        int chunksBelowSurface = initialSize.y - chunksAboveSurface;
+
+        // Determine which chunk y=0 corresponds to in world coordinates
+        // We'll place the chunk containing groundHeight at y = 0
+        int surfaceChunkY = gen.groundHeight / chunkSize;
+
+        for (int x = -radius; x <= radius; x++)
+        {
+            for (int z = -radius; z <= radius; z++)
+            {
+                if (x * x + z * z <= radius * radius) // horizontal circle
                 {
-                    CreateChunk(new Vector3Int(x, y, z));
+                    for (int y = -chunksBelowSurface; y < chunksAboveSurface; y++)
+                    {
+                        // Shift so surface aligns with y = surfaceChunkY
+                        CreateChunk(new Vector3Int(x, y + surfaceChunkY, z));
+                    }
                 }
+            }
+        }
     }
 
     public Chunk GetChunk(Vector3Int coord)
@@ -71,6 +99,9 @@ public class VoxelWorld : MonoBehaviour
         chunk.cubeSize = cubeSize;
         chunk.blockManager = blockManager; // assign the BlockManager reference
 
+        chunk.mesh = new Mesh();
+        mf.sharedMesh = chunk.mesh;
+
         // Assign material if set
         if (blockMaterial != null)
         {
@@ -96,7 +127,9 @@ public class VoxelWorld : MonoBehaviour
         chunk.ApplyMesh();
 
         // Assign mesh to collider
-        mc.sharedMesh = chunk.GetComponent<MeshFilter>().mesh;
+        mc.sharedMesh = chunk.mesh;
+
+        chunk.gameObject.layer = LayerMask.NameToLayer("Ground");
 
         return chunk;
     }

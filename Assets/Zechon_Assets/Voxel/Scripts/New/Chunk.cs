@@ -6,7 +6,7 @@ public class Chunk : MonoBehaviour
 {
     public int[,,] blocks = new int[VoxelData.ChunkSize, VoxelData.ChunkSize, VoxelData.ChunkSize];
 
-    private Mesh mesh;
+    public Mesh mesh;
     private List<Vector3> verts = new();
     private List<int> tris = new();
     private List<Vector2> uvs = new();
@@ -46,48 +46,41 @@ public class Chunk : MonoBehaviour
             numTexs = blockManager.allBlocks.Length;
         }
 
-        for (int x = 0; x < VoxelData.ChunkSize; x++)
-            for (int y = 0; y < VoxelData.ChunkSize; y++)
-                for (int z = 0; z < VoxelData.ChunkSize; z++)
-                {
-                    if (y < 6) blocks[x, y, z] = 1; // floor
-                    else if (y >= 6 && y < 10) blocks[x, y, z] = 2;
-                    else if (y == 10) blocks[x, y, z] = 3;
-                }
-
-        int centerX = VoxelData.ChunkSize / 2;
-        int centerZ = VoxelData.ChunkSize / 2;
-        int pyramidBaseSize = 8;
-        int pyramidHeight = 5;
-        int startY = 11;
-        int blockID = 6;
-
-        for (int layer = 0; layer < pyramidHeight; layer++)
-        {
-            int y = startY + layer;
-            int halfSize = pyramidBaseSize / 2 - layer;
-
-            for (int x = centerX - halfSize; x <= centerX + halfSize; x++)
-                for (int z = centerZ - halfSize; z <= centerZ + halfSize; z++)
-                    if (x >= 0 && x < VoxelData.ChunkSize && z >= 0 && z < VoxelData.ChunkSize && y < VoxelData.ChunkSize)
-                        blocks[x, y, z] = blockID;
-        }
-
         GenerateChunkMesh();
         ApplyMesh();
     }
 
-    bool IsVoxelSolid(int x, int y, int z)
+    bool IsVoxelSolid(int x, int y, int z, int faceIndex, int currentY)
     {
         int cs = VoxelWorld.Instance.chunkSize;
-
         int gx = chunkCoord.x * cs + x;
         int gy = chunkCoord.y * cs + y;
         int gz = chunkCoord.z * cs + z;
 
-        return VoxelWorld.Instance.GetBlock(gx, gy, gz) != 0;
-    }
+        int neighborID = VoxelWorld.Instance.GetBlock(gx, gy, gz);
+        if (neighborID == 0) return false;
 
+        BlockClass neighbor = blockManager.allBlocks[neighborID];
+        if (neighbor == null) return false;
+
+        float neighborBottom = 0f;
+        float neighborTop = neighbor.height;
+
+        // Check based on face type
+        switch (faceIndex)
+        {
+            case 4: // top
+                return neighborTop >= 1f; // full block above hides top
+            case 5: // bottom
+                return neighborBottom <= 0f; // bottom face rarely hidden
+            default: // sides
+                     // Determine current block’s vertical span
+                float currentTop = 1f;
+
+                // Cull side if neighbor fully overlaps vertical span
+                return neighborTop >= currentTop;
+        }
+    }
 
     public void GenerateChunkMesh()
     {
@@ -113,32 +106,20 @@ public class Chunk : MonoBehaviour
         for (int faceIndex = 0; faceIndex < 6; faceIndex++)
         {
             Vector3 dir = faceDirs[faceIndex];
-
-            // Neighbor check
             int nx = x + (int)dir.x;
             int ny = y + (int)dir.y;
             int nz = z + (int)dir.z;
 
-            if (!IsVoxelSolid(nx, ny, nz))
+            if (!IsVoxelSolid(nx, ny, nz, faceIndex, y))
                 AddFace(blockPos, faceIndex);
         }
     }
 
     void AddFace(Vector3 blockPos, int faceIndex)
     {
+        float yOffset = 0f;
+
         int start = verts.Count;
-
-        for (int i = 0; i < 4; i++)
-        {
-            verts.Add(blockPos * cubeSize + faceVerts[faceIndex, i] * cubeSize);
-        }
-
-        tris.Add(start + 2);
-        tris.Add(start + 1);
-        tris.Add(start);
-        tris.Add(start);
-        tris.Add(start + 3);
-        tris.Add(start + 2);
 
         int x = (int)blockPos.x;
         int y = (int)blockPos.y;
@@ -148,20 +129,61 @@ public class Chunk : MonoBehaviour
         if (blockID == 0) return;
 
         BlockClass block = blockManager.allBlocks[blockID];
+
+        if (block.isSlab)
+            yOffset = 0f;
+        else
+            yOffset = 0f;
+
+        for (int i = 0; i < 4; i++)
+        {
+            Vector3 vert = faceVerts[faceIndex, i];
+  
+            if (faceIndex != 4 && faceIndex != 5)
+                vert.y = vert.y * block.height + yOffset;
+            else if (faceIndex == 4)
+                vert.y = block.height + yOffset;
+            else if (faceIndex == 5)
+                vert.y = 0f + yOffset;
+
+            verts.Add(blockPos * cubeSize + vert * cubeSize);
+        }
+
+        tris.Add(start + 2);
+        tris.Add(start + 1);
+        tris.Add(start);
+        tris.Add(start);
+        tris.Add(start + 3);
+        tris.Add(start + 2);
+
         Texture2D faceTex = block.blockFaceTextures[0];
         if (faceIndex == 4) faceTex = block.blockFaceTextures[1];
         else if (faceIndex == 5) faceTex = block.blockFaceTextures[2];
+
+        float uvHeightScale = 1f;
+        if (block.isSlab && faceIndex != 4 && faceIndex != 5)
+            uvHeightScale = block.uvSideHeight;
 
         float tileSizeU = 1f / numTexs;
         float tileSizeV = 1f / 3f;
 
         float xOffset = blockID * tileSizeU;
-        float yOffset = (faceIndex == 4) ? tileSizeV * 1 : (faceIndex == 5) ? tileSizeV * 2 : 0f;
+        if (block.isSlab && faceIndex != 4 && faceIndex != 5)
+        {
+            yOffset = tileSizeV * 0f;
+        }
+        else
+        {
+            yOffset = (faceIndex == 4) ? tileSizeV * 1 : (faceIndex == 5) ? tileSizeV * 2 : 0f;
+        }
 
-        uvs.Add(new Vector2(xOffset, yOffset));                // bottom-left
-        uvs.Add(new Vector2(xOffset, yOffset + tileSizeV));   // top-left
-        uvs.Add(new Vector2(xOffset + tileSizeU, yOffset + tileSizeV)); // top-right
-        uvs.Add(new Vector2(xOffset + tileSizeU, yOffset));   // bottom-right
+        float vMin = yOffset;
+        float vMax = yOffset + tileSizeV * (block.isSlab && faceIndex != 4 && faceIndex != 5 ? 0.5f : 1f);
+
+        uvs.Add(new Vector2(xOffset, vMin));        // bottom-left
+        uvs.Add(new Vector2(xOffset, vMax));        // top-left
+        uvs.Add(new Vector2(xOffset + tileSizeU, vMax)); // top-right
+        uvs.Add(new Vector2(xOffset + tileSizeU, vMin)); // bottom-right
     }
 
     public void ApplyMesh()
@@ -188,5 +210,4 @@ public class Chunk : MonoBehaviour
         mc.sharedMesh = null;
         mc.sharedMesh = mesh;
     }
-
 }
