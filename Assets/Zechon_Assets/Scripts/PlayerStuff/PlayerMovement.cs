@@ -63,7 +63,7 @@ public class PlayerMovement : NetworkBehaviour
             CheckGrounded();
 
             HandleMovement();
-            StepUp();
+            //StepUp();
             HandleJump();
 
             NetworkPosition.Value = rb.position;

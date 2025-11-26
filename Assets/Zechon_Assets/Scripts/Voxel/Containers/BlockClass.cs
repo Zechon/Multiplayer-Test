@@ -17,7 +17,7 @@ public class BlockClass : ScriptableObject
     public bool isSlab = false;
 
     [Tooltip("Vertical size of the block (1 = full block, 0.5 = slab)")]
-    [Range(0.25f, 1f)]
+    [Range(0.5f, 1f)]
     public float height = 1f;
 
     [Tooltip("1 = full block(32px). 0.5 = slab(16px)")]

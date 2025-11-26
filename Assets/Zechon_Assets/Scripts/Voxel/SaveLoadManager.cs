@@ -52,7 +52,7 @@ public static class SaveLoadManager
         bw.Write(metaBytes.Length);
         bw.Write(metaBytes);
 
-        int cs = VoxelData.ChunkSize;
+        int cs = 16;
 
         using var payloadMs = new MemoryStream();
         using (var payloadWriter = new BinaryWriter(payloadMs, Encoding.UTF8, leaveOpen: true))
@@ -90,7 +90,7 @@ public static class SaveLoadManager
         string file = GetChunkFilePath(worldName, coord);
         if (!File.Exists(file)) return null;
 
-        int cs = VoxelData.ChunkSize;
+        int cs = 16;
         int[,,] blocks = new int[cs, cs, cs];
 
         using var fs = File.Open(file, FileMode.Open, FileAccess.Read, FileShare.Read);
@@ -194,7 +194,7 @@ public static class SaveLoadManager
     public static (ChunkMetadata meta, int[,,] blocks)? LoadChunkRaw(string filePath)
     {
         // This method is safe to run in a background thread
-        int cs = VoxelData.ChunkSize;
+        int cs = 16;
         int[,,] blocks = new int[cs, cs, cs];
 
         using var fs = System.IO.File.Open(filePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.Read);

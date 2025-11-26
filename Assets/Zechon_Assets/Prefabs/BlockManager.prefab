@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2066546740391683179
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2780414438039725474}
+  - component: {fileID: 5272699469119318921}
+  m_Layer: 0
+  m_Name: BlockManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2780414438039725474
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066546740391683179}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.15528, y: 0, z: 5.83898}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5272699469119318921
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2066546740391683179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77c657599a7529a408a2487daf1cfe7e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlockManager
+  allBlocks:
+  - {fileID: 11400000, guid: 35360adeb1a273c468547b8b0735d6fd, type: 2}
+  - {fileID: 11400000, guid: fd52ef34aba804046a71d0aeb730a520, type: 2}
+  - {fileID: 11400000, guid: 024ec38ecd8449946820e322c96a7186, type: 2}
+  - {fileID: 11400000, guid: 39df60a93026be047b319c55f7ace187, type: 2}
+  - {fileID: 11400000, guid: 5872ad42c0f438740b7a153b5c2b8357, type: 2}
+  - {fileID: 11400000, guid: 49b46612f2eea2a4db340951d252372e, type: 2}
+  - {fileID: 11400000, guid: ab0d06d0d645eb84980b89f743632379, type: 2}
+  - {fileID: 11400000, guid: 96a153d9db64dc3419a13bfffe40a367, type: 2}
+  - {fileID: 11400000, guid: a6cefb5ea9f6f92499b4ff44d02559eb, type: 2}
+  atlas: {fileID: 0}
+  tileSize: 32
+  normalAtlas: {fileID: 0}

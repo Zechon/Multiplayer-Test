@@ -23,3 +23,6 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 6d0c2fc0c1155894bb010f4cbfdec0e3, type: 3}
   isSlab: 1
   height: 0.5
+  uvSideHeight: 0.5
+  uvTopHeight: 1
+  uvBottomHeight: 1

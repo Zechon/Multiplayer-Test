@@ -1,63 +1,50 @@
 using UnityEngine;
 using System.Collections.Generic;
+using static UnityEngine.Mesh;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 public class Chunk : MonoBehaviour
 {
-    public int[,,] blocks = new int[VoxelData.ChunkSize, VoxelData.ChunkSize, VoxelData.ChunkSize];
-
-    public ChunkMetadata metadata;
+    public int[,,] blocks = new int[16, 16, 16];
 
     public Mesh mesh;
-    private List<Vector3> verts = new();
-    private List<int> tris = new();
-    private List<Vector2> uvs = new();
-
-    public BlockManager blockManager;
     public Vector3Int chunkCoord;
     public float cubeSize = 0.5f;
     public int numTexs;
 
-    private static readonly Vector3[] faceDirs = {
-        Vector3.forward, Vector3.back,
-        Vector3.right, Vector3.left,
-        Vector3.up, Vector3.down
-    };
+    [Header("References")]
+    private ChunkMeshData meshData;
+    public ChunkMetadata metadata;
+    public BlockManager blockManager;
 
-    private static readonly Vector3[,] faceVerts = {
-        {new Vector3(0,0,1), new Vector3(0,1,1), new Vector3(1,1,1), new Vector3(1,0,1)}, // Front
-        {new Vector3(1,0,0), new Vector3(1,1,0), new Vector3(0,1,0), new Vector3(0,0,0)}, // Back
-        {new Vector3(1,0,1), new Vector3(1,1,1), new Vector3(1,1,0), new Vector3(1,0,0)}, // Right
-        {new Vector3(0,0,0), new Vector3(0,1,0), new Vector3(0,1,1), new Vector3(0,0,1)}, // Left
-        {new Vector3(0,1,1), new Vector3(0,1,0), new Vector3(1,1,0), new Vector3(1,1,1)}, // Top
-        {new Vector3(0,0,0), new Vector3(0,0,1), new Vector3(1,0,1), new Vector3(1,0,0)}  // Bottom
-    };
+    private void Awake()
+    {
+        meshData = new ChunkMeshData(16);
+    }
 
     #region Mesh Generation
 
     public void GenerateChunkMesh()
     {
-        verts.Clear();
-        tris.Clear();
-        uvs.Clear();
+        meshData.Clear();
 
-        for (int x = 0; x < VoxelData.ChunkSize; x++)
-            for (int y = 0; y < VoxelData.ChunkSize; y++)
-                for (int z = 0; z < VoxelData.ChunkSize; z++)
+        for (int x = 0; x < 16; x++)
+            for (int y = 0; y < 16; y++)
+                for (int z = 0; z < 16; z++)
                     if (blocks[x, y, z] != 0)
-                        AddVoxelFaces(x, y, z);
+                        AddVoxelFaces(x, y, z, meshData);
     }
 
-    private void AddVoxelFaces(int x, int y, int z)
+    private void AddVoxelFaces(int x, int y, int z, ChunkMeshData meshData)
     {
         Vector3 blockPos = new Vector3(x, y, z);
 
         for (int faceIndex = 0; faceIndex < 6; faceIndex++)
         {
-            Vector3Int neighborPos = new Vector3Int(x, y, z) + Vector3Int.RoundToInt(faceDirs[faceIndex]);
+            Vector3Int neighborPos = new Vector3Int(x, y, z) + Vector3Int.RoundToInt(ChunkMeshData.faceDirs[faceIndex]);
             if (ShouldRenderFace(neighborPos, faceIndex))
             {
-                AddFace(blockPos, faceIndex);
+                AddFace(blockPos, faceIndex, meshData);
             }
         }
     }
@@ -65,28 +52,25 @@ public class Chunk : MonoBehaviour
     private bool ShouldRenderFace(Vector3Int neighborPos, int faceIndex)
     {
         int neighborID = VoxelWorld.Instance.GetBlock(
-            chunkCoord.x * VoxelData.ChunkSize + neighborPos.x,
-            chunkCoord.y * VoxelData.ChunkSize + neighborPos.y,
-            chunkCoord.z * VoxelData.ChunkSize + neighborPos.z
+            chunkCoord.x * 16 + neighborPos.x,
+            chunkCoord.y * 16 + neighborPos.y,
+            chunkCoord.z * 16 + neighborPos.z
         );
 
-        if (neighborID == 0) return true; // empty, always render
+        if (neighborID == 0) return true;
 
         BlockClass neighbor = blockManager.allBlocks[neighborID];
-        if (neighbor == null) return true; // unknown, render to be safe
+        if (neighbor == null) return true;
 
-        // Top/bottom faces: always render if neighbor is lower than 1 unit
-        if (faceIndex == 4) return neighbor.height < 1f; // top
-        if (faceIndex == 5) return neighbor.height < 1f; // bottom
+        if (faceIndex == 4) return neighbor.height < 1f;
+        if (faceIndex == 5) return neighbor.height < 1f;
 
-        // Side faces: render if neighbor is not a full cube
         return neighbor.height < 1f;
     }
 
-
-    private void AddFace(Vector3 blockPos, int faceIndex)
+    private void AddFace(Vector3 blockPos, int faceIndex, ChunkMeshData meshData)
     {
-        int start = verts.Count;
+        int start = meshData.verts.Count;
         int x = (int)blockPos.x;
         int y = (int)blockPos.y;
         int z = (int)blockPos.z;
@@ -95,29 +79,26 @@ public class Chunk : MonoBehaviour
 
         BlockClass block = blockManager.allBlocks[blockID];
 
-        // --- Vertex positions ---
         for (int i = 0; i < 4; i++)
         {
-            Vector3 vert = faceVerts[faceIndex, i];
+            Vector3 vert = ChunkMeshData.faceVerts[faceIndex, i];
             if (faceIndex != 4 && faceIndex != 5)
-                vert.y *= block.height; // side face height
+                vert.y *= block.height;
             else if (faceIndex == 4)
-                vert.y = block.height; // top
+                vert.y = block.height;
             else
-                vert.y = 0f; // bottom
+                vert.y = 0f;
 
-            verts.Add(blockPos * cubeSize + vert * cubeSize);
+            meshData.verts.Add(blockPos * cubeSize + vert * cubeSize);
         }
 
-        // --- Triangles ---
-        tris.Add(start + 2);
-        tris.Add(start + 1);
-        tris.Add(start);
-        tris.Add(start);
-        tris.Add(start + 3);
-        tris.Add(start + 2);
+        meshData.tris.Add(start + 2);
+        meshData.tris.Add(start + 1);
+        meshData.tris.Add(start);
+        meshData.tris.Add(start);
+        meshData.tris.Add(start + 3);
+        meshData.tris.Add(start + 2);
 
-        // --- UVs ---
         float tileSizeU = 1f / numTexs;
         float tileSizeV = 1f / 3f;
 
@@ -131,10 +112,10 @@ public class Chunk : MonoBehaviour
 
         float uvHeight = (block.isSlab && faceIndex < 4) ? tileSizeV * 0.5f : tileSizeV;
 
-        uvs.Add(new Vector2(xOffset, yOffset));        // bottom-left
-        uvs.Add(new Vector2(xOffset, yOffset + uvHeight)); // top-left
-        uvs.Add(new Vector2(xOffset + tileSizeU, yOffset + uvHeight)); // top-right
-        uvs.Add(new Vector2(xOffset + tileSizeU, yOffset)); // bottom-right
+        meshData.uvs.Add(new Vector2(xOffset, yOffset));        // bottom-left
+        meshData.uvs.Add(new Vector2(xOffset, yOffset + uvHeight)); // top-left
+        meshData.uvs.Add(new Vector2(xOffset + tileSizeU, yOffset + uvHeight)); // top-right
+        meshData.uvs.Add(new Vector2(xOffset + tileSizeU, yOffset)); // bottom-right
     }
 
     #endregion
@@ -148,12 +129,12 @@ public class Chunk : MonoBehaviour
         else
             mesh.Clear();
 
-        if (verts.Count > 65000)
+        if (meshData.verts.Count > 65000)
             mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
 
-        mesh.SetVertices(verts);
-        mesh.SetTriangles(tris, 0);
-        mesh.SetUVs(0, uvs);
+        mesh.SetVertices(meshData.verts);
+        mesh.SetTriangles(meshData.tris, 0);
+        mesh.SetUVs(0, meshData.uvs);
         mesh.RecalculateNormals();
         mesh.RecalculateBounds();
         mesh.MarkDynamic();

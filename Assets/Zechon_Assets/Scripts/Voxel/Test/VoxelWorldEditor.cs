@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
+using TMPro;
 
 public class VoxelWorldEditor : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class VoxelWorldEditor : MonoBehaviour
     public LayerMask chunkLayerMask;
     public int brushSize = 1;
     public int selectedBlockID = 1;
+    private int BlockIDMax;
     [SerializeField] float placeDelay = 0.075f;
     float lastPlaceTime = 0f;
 
@@ -17,6 +19,12 @@ public class VoxelWorldEditor : MonoBehaviour
     private GameObject previewInstance;
     private Vector3Int? previewBlockLocal; 
     private Chunk previewChunk;
+
+    [Header("UI")]
+    public TMP_Text IdText;
+
+    [Header("Other References")]
+    [SerializeField] private BlockManager blockManager;
 
     // Queue for async chunk loading
     private Queue<(Vector3Int coord, (ChunkMetadata meta, int[,,] blocks) data)> applyQueue = new();
@@ -33,6 +41,11 @@ public class VoxelWorldEditor : MonoBehaviour
     {
         previewInstance = Instantiate(previewPrefab);
         previewInstance.SetActive(false);
+
+        BlockIDMax = blockManager.allBlocks.Length - 1;
+
+        string result = $"ID: {selectedBlockID}, {blockManager.allBlocks[selectedBlockID]}";
+        IdText.text = result.Replace("(BlockClass)", " ");
     }
 
     private void Update()
@@ -79,12 +92,25 @@ public class VoxelWorldEditor : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Z)) Undo();
         if (Input.GetKeyDown(KeyCode.Y)) Redo();
+
+        if (Input.GetKeyDown(KeyCode.E)) SwapSelectedBlock(1);
+        if (Input.GetKeyDown(KeyCode.Q)) SwapSelectedBlock(-1);
+    }
+
+    private void SwapSelectedBlock(int change)
+    {
+        if (selectedBlockID == BlockIDMax && change == 1) selectedBlockID = 1;
+        else if (selectedBlockID == 1 && change == -1) selectedBlockID = BlockIDMax;
+        else selectedBlockID += change;
+
+        string result = $"ID: {selectedBlockID}, {blockManager.allBlocks[selectedBlockID]}";
+        IdText.text =  result.Replace("(BlockClass)", " ");
     }
 
     private void ModifyBlock(bool place)
     {
         Ray ray = editorCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, chunkLayerMask)) return;
+        if (!Physics.Raycast(ray, out RaycastHit hit, 15f, chunkLayerMask)) return;
 
         Vector3 targetPos;
 
@@ -211,7 +237,7 @@ public class VoxelWorldEditor : MonoBehaviour
         previewInstance.transform.position = (Vector3)anchorBlock * VoxelWorld.Instance.cubeSize
                                              + Vector3.one * (VoxelWorld.Instance.cubeSize / 2f);
 
-        float scale = VoxelWorld.Instance.cubeSize * brushSize;
+        float scale = (VoxelWorld.Instance.cubeSize * brushSize) + 0.01f;
         previewInstance.transform.localScale = new Vector3(scale, scale, scale);
 
         previewInstance.SetActive(true);

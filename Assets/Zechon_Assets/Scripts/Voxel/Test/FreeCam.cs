@@ -60,8 +60,8 @@ public class FreeCam : MonoBehaviour
         if (Input.GetKey(KeyCode.S)) dir -= transform.forward;
         if (Input.GetKey(KeyCode.A)) dir -= transform.right;
         if (Input.GetKey(KeyCode.D)) dir += transform.right;
-        if (Input.GetKey(KeyCode.E)) dir += transform.up;
-        if (Input.GetKey(KeyCode.Q)) dir -= transform.up;
+        if (Input.GetKey(KeyCode.Space)) dir += transform.up;
+        if (Input.GetKey(KeyCode.LeftControl)) dir -= transform.up;
 
         transform.position += dir * speed * Time.deltaTime;
     }
