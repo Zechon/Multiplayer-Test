@@ -50,46 +50,39 @@ public class Chunk : MonoBehaviour
 
     private void AddVoxelFaces(int x, int y, int z)
     {
-        Vector3 blockPos = new(x, y, z);
+        Vector3 blockPos = new Vector3(x, y, z);
+
         for (int faceIndex = 0; faceIndex < 6; faceIndex++)
         {
-            Vector3 dir = faceDirs[faceIndex];
-            int nx = x + (int)dir.x;
-            int ny = y + (int)dir.y;
-            int nz = z + (int)dir.z;
-
-            if (!IsNeighborSolid(nx, ny, nz, faceIndex, y))
+            Vector3Int neighborPos = new Vector3Int(x, y, z) + Vector3Int.RoundToInt(faceDirs[faceIndex]);
+            if (ShouldRenderFace(neighborPos, faceIndex))
+            {
                 AddFace(blockPos, faceIndex);
+            }
         }
     }
 
-    private bool IsNeighborSolid(int x, int y, int z, int faceIndex, int currentY)
+    private bool ShouldRenderFace(Vector3Int neighborPos, int faceIndex)
     {
         int neighborID = VoxelWorld.Instance.GetBlock(
-            chunkCoord.x * VoxelData.ChunkSize + x,
-            chunkCoord.y * VoxelData.ChunkSize + y,
-            chunkCoord.z * VoxelData.ChunkSize + z
+            chunkCoord.x * VoxelData.ChunkSize + neighborPos.x,
+            chunkCoord.y * VoxelData.ChunkSize + neighborPos.y,
+            chunkCoord.z * VoxelData.ChunkSize + neighborPos.z
         );
 
-        if (neighborID == 0) return false;
+        if (neighborID == 0) return true; // empty, always render
 
         BlockClass neighbor = blockManager.allBlocks[neighborID];
-        if (neighbor == null) return false;
+        if (neighbor == null) return true; // unknown, render to be safe
 
-        // For sides: cull only if neighbor fully overlaps vertically
-        if (faceIndex < 4)
-        {
-            return neighbor.height >= 1f; // full block or full-height slab
-        }
-        else if (faceIndex == 4) // top face
-        {
-            return false; // always show top face
-        }
-        else // bottom face
-        {
-            return false; // always show bottom face
-        }
+        // Top/bottom faces: always render if neighbor is lower than 1 unit
+        if (faceIndex == 4) return neighbor.height < 1f; // top
+        if (faceIndex == 5) return neighbor.height < 1f; // bottom
+
+        // Side faces: render if neighbor is not a full cube
+        return neighbor.height < 1f;
     }
+
 
     private void AddFace(Vector3 blockPos, int faceIndex)
     {

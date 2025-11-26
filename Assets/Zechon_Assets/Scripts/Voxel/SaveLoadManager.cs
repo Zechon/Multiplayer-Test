@@ -14,11 +14,22 @@ public static class SaveLoadManager
 
     public static bool UseGzipCompression = true;
 
+    public static string GetWorldBasePath(string worldName)
+    {
+        #if UNITY_EDITOR
+        string path = Path.Combine(Application.dataPath, "../Worlds", worldName);
+        #else
+        // In builds, save next to the exe
+        string exeDir = AppDomain.CurrentDomain.BaseDirectory;
+        string path = Path.Combine(exeDir, "Worlds", worldName);
+        #endif
+        Directory.CreateDirectory(path);
+        return path;
+    }
+
     public static string GetChunkFilePath(string worldName, Vector3Int coord)
     {
-        string worldPath = Path.Combine(Application.persistentDataPath, "Worlds", worldName);
-        Directory.CreateDirectory(worldPath);
-
+        string worldPath = GetWorldBasePath(worldName);
         return Path.Combine(worldPath, $"chunk_{coord.x}_{coord.y}_{coord.z}.vox");
     }
 

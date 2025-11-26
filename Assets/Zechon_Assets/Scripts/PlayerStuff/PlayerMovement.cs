@@ -10,6 +10,10 @@ public class PlayerMovement : NetworkBehaviour
     public float jumpForce = 5f;
     public float gravityMultiplier = 2f;
 
+    [Header("Step Settings")]
+    [SerializeField] private float stepHeight = 0.5f; // max height to step
+    [SerializeField] private float stepSmooth = 0.1f; // speed of step
+
     [Header("Ground Check")]
     [SerializeField] private LayerMask thisIsGround;
     [SerializeField] private float groundCheckOffset = 0.1f;
@@ -59,6 +63,7 @@ public class PlayerMovement : NetworkBehaviour
             CheckGrounded();
 
             HandleMovement();
+            StepUp();
             HandleJump();
 
             NetworkPosition.Value = rb.position;
@@ -99,5 +104,29 @@ public class PlayerMovement : NetworkBehaviour
     private void ApplyJump()
     {
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+    }
+
+    private void StepUp()
+    {
+        if (!isGrounded) return;
+
+        Vector3 forward = transform.TransformDirection(new Vector3(moveInput.x, 0, moveInput.y));
+        if (forward.magnitude < 0.01f) return;
+
+        RaycastHit hitLower;
+        RaycastHit hitUpper;
+
+        Vector3 origin = transform.position + Vector3.up * 0.1f;
+        // Check in front of player at foot height
+        if (Physics.Raycast(origin, forward, out hitLower, 0.6f, thisIsGround))
+        {
+            // Check at step height above
+            Vector3 upperOrigin = origin + Vector3.up * stepHeight;
+            if (!Physics.Raycast(upperOrigin, forward, out hitUpper, 0.6f, thisIsGround))
+            {
+                // No obstruction above, so step up
+                rb.position += Vector3.up * stepSmooth;
+            }
+        }
     }
 }

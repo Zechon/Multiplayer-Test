@@ -9,17 +9,40 @@ public class VoxelWorldEditor : MonoBehaviour
     public LayerMask chunkLayerMask;
     public int brushSize = 1;
     public int selectedBlockID = 1;
+    [SerializeField] float placeDelay = 0.075f;
+    float lastPlaceTime = 0f;
 
-    // Queue for applying loaded chunks on main thread
+    [Header("Highlight Preview")]
+    public GameObject previewPrefab;
+    private GameObject previewInstance;
+    private Vector3Int? previewBlockLocal; 
+    private Chunk previewChunk;
+
+    // Queue for async chunk loading
     private Queue<(Vector3Int coord, (ChunkMetadata meta, int[,,] blocks) data)> applyQueue = new();
+
+    // Undo/Redo
+    private struct BlockEdit
+    {
+        public List<(Vector3Int worldPos, int previousID, int newID)> changes;
+    }
+    private Stack<BlockEdit> undoStack = new();
+    private Stack<BlockEdit> redoStack = new();
+
+    private void Start()
+    {
+        previewInstance = Instantiate(previewPrefab);
+        previewInstance.SetActive(false);
+    }
 
     private void Update()
     {
         HandleInput();
         ApplyQueuedChunks();
+        UpdatePreview();
     }
 
-    #region Async Loading Queue
+    #region Async Chunk Queue
 
     private void ApplyQueuedChunks()
     {
@@ -51,68 +74,156 @@ public class VoxelWorldEditor : MonoBehaviour
     {
         if (editorCamera == null) return;
 
-        if (Input.GetMouseButton(0)) // Left-click: place
-        {
-            ModifyBlock(true);
-        }
-        else if (Input.GetMouseButton(1)) // Right-click: remove
-        {
-            ModifyBlock(false);
-        }
+        if (Input.GetMouseButton(0) && CanPlace()) ModifyBlock(true);
+        if (Input.GetMouseButton(1) && CanPlace()) ModifyBlock(false);
+
+        if (Input.GetKeyDown(KeyCode.Z)) Undo();
+        if (Input.GetKeyDown(KeyCode.Y)) Redo();
     }
 
     private void ModifyBlock(bool place)
     {
-        Ray ray = editorCamera.ScreenPointToRay(Input.mousePosition);
+        Ray ray = editorCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         if (!Physics.Raycast(ray, out RaycastHit hit, 100f, chunkLayerMask)) return;
 
-        Vector3Int chunkCoord = new Vector3Int(
-            Mathf.FloorToInt(hit.point.x / VoxelWorld.Instance.chunkSize),
-            Mathf.FloorToInt(hit.point.y / VoxelWorld.Instance.chunkSize),
-            Mathf.FloorToInt(hit.point.z / VoxelWorld.Instance.chunkSize)
-        );
+        Vector3 targetPos;
 
-        Chunk chunk = VoxelWorld.Instance.GetChunk(chunkCoord);
-        if (chunk == null) return;
+        if (place)
+        {
+            // Place block next to the face you hit
+            targetPos = hit.point + hit.normal * (VoxelWorld.Instance.cubeSize * 0.5f);
+        }
+        else
+        {
+            // Remove block being looked at
+            targetPos = hit.point - hit.normal * 0.01f;
+        }
 
-        Vector3 localPos = hit.point - chunk.transform.position;
-        Vector3Int blockLocal = new Vector3Int(
-            Mathf.FloorToInt(localPos.x / chunk.cubeSize),
-            Mathf.FloorToInt(localPos.y / chunk.cubeSize),
-            Mathf.FloorToInt(localPos.z / chunk.cubeSize)
-        );
+        Vector3Int worldBlock = Vector3Int.FloorToInt(targetPos / VoxelWorld.Instance.cubeSize);
 
-        ApplyBrush(chunk, blockLocal, place);
+        ApplyBrushWorld(worldBlock, place);
     }
 
-    private void ApplyBrush(Chunk chunk, Vector3Int center, bool place)
-    {
-        int radius = Mathf.Max(brushSize, 1);
-
-        for (int x = -radius; x <= radius; x++)
-            for (int y = -radius; y <= radius; y++)
-                for (int z = -radius; z <= radius; z++)
-                {
-                    Vector3Int pos = center + new Vector3Int(x, y, z);
-                    if (IsInsideChunk(pos))
-                    {
-                        chunk.blocks[pos.x, pos.y, pos.z] = place ? selectedBlockID : 0;
-                    }
-                }
-
-        chunk.GenerateChunkMesh();
-        chunk.ApplyMesh();
-
-        // Save asynchronously
-        _ = SaveLoadManager.SaveChunkAsync(VoxelWorld.Instance.worldName, chunk, chunk.metadata);
-    }
-
-    private bool IsInsideChunk(Vector3Int pos)
+    private void ApplyBrushWorld(Vector3Int anchor, bool place)
     {
         int cs = VoxelWorld.Instance.chunkSize;
-        return pos.x >= 0 && pos.y >= 0 && pos.z >= 0 &&
-               pos.x < cs && pos.y < cs && pos.z < cs;
+
+        var edit = new BlockEdit { changes = new List<(Vector3Int worldPos, int previousID, int newID)>() };
+
+        for (int x = 0; x < brushSize; x++)
+            for (int y = 0; y < brushSize; y++)
+                for (int z = 0; z < brushSize; z++)
+                {
+                    Vector3Int pos = anchor + new Vector3Int(x, y, z);
+
+                    // Determine chunk
+                    Vector3Int chunkCoord = new Vector3Int(
+                        Mathf.FloorToInt(pos.x / (float)cs),
+                        Mathf.FloorToInt(pos.y / (float)cs),
+                        Mathf.FloorToInt(pos.z / (float)cs)
+                    );
+
+                    Chunk chunk = VoxelWorld.Instance.GetChunk(chunkCoord);
+                    if (chunk == null) chunk = VoxelWorld.Instance.CreateChunk(chunkCoord);
+
+                    Vector3Int localPos = pos - chunkCoord * cs;
+                    if (!IsInsideChunk(localPos)) continue;
+
+                    int previousID = chunk.blocks[localPos.x, localPos.y, localPos.z];
+                    int newID = place ? selectedBlockID : 0;
+
+                    if (previousID == newID) continue; // skip no-op
+
+                    chunk.blocks[localPos.x, localPos.y, localPos.z] = newID;
+                    edit.changes.Add((pos, previousID, newID));
+
+                    chunk.GenerateChunkMesh();
+                    chunk.ApplyMesh();
+
+                    _ = SaveLoadManager.SaveChunkAsync(VoxelWorld.Instance.worldName, chunk, chunk.metadata);
+                }
+
+        if (edit.changes.Count > 0)
+        {
+            undoStack.Push(edit);
+            redoStack.Clear();
+        }
+    }
+
+
+    private bool IsInsideChunk(Vector3Int pos) { int cs = VoxelWorld.Instance.chunkSize; return pos.x >= 0 && pos.y >= 0 && pos.z >= 0 && pos.x < cs && pos.y < cs && pos.z < cs; }
+
+    private void Undo()
+    {
+        if (undoStack.Count == 0) return;
+        var edit = undoStack.Pop();
+        redoStack.Push(edit);
+        ApplyEdit(edit, undo: true);
+    }
+
+    private void Redo()
+    {
+        if (redoStack.Count == 0) return;
+        var edit = redoStack.Pop();
+        undoStack.Push(edit);
+        ApplyEdit(edit, undo: false);
+    }
+
+    private void ApplyEdit(BlockEdit edit, bool undo)
+    {
+        foreach (var change in edit.changes)
+        {
+            Vector3Int pos = change.worldPos;
+            Vector3Int chunkCoord = new Vector3Int(
+                Mathf.FloorToInt(pos.x / (float)VoxelWorld.Instance.chunkSize),
+                Mathf.FloorToInt(pos.y / (float)VoxelWorld.Instance.chunkSize),
+                Mathf.FloorToInt(pos.z / (float)VoxelWorld.Instance.chunkSize)
+            );
+            Chunk chunk = VoxelWorld.Instance.GetChunk(chunkCoord);
+            if (chunk == null) continue;
+
+            Vector3Int localPos = pos - chunkCoord * VoxelWorld.Instance.chunkSize;
+            chunk.blocks[localPos.x, localPos.y, localPos.z] = undo ? change.previousID : change.newID;
+            chunk.GenerateChunkMesh();
+            chunk.ApplyMesh();
+            _ = SaveLoadManager.SaveChunkAsync(VoxelWorld.Instance.worldName, chunk, chunk.metadata);
+        }
     }
 
     #endregion
+
+    #region Highlight Preview
+
+    private void UpdatePreview()
+    {
+        Ray ray = editorCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+
+        if (!Physics.Raycast(ray, out RaycastHit hit, 100f, chunkLayerMask))
+        {
+            previewInstance.SetActive(false);
+            previewBlockLocal = null;
+            return;
+        }
+
+        Vector3 hitPosInside = hit.point - hit.normal * 0.01f;
+        Vector3Int anchorBlock = Vector3Int.FloorToInt(hitPosInside / VoxelWorld.Instance.cubeSize);
+
+        previewInstance.transform.position = (Vector3)anchorBlock * VoxelWorld.Instance.cubeSize
+                                             + Vector3.one * (VoxelWorld.Instance.cubeSize / 2f);
+
+        float scale = VoxelWorld.Instance.cubeSize * brushSize;
+        previewInstance.transform.localScale = new Vector3(scale, scale, scale);
+
+        previewInstance.SetActive(true);
+        previewBlockLocal = anchorBlock;
+    }
+
+    #endregion
+
+    private bool CanPlace()
+    {
+        if (Time.time - lastPlaceTime < placeDelay) return false;
+        lastPlaceTime = Time.time;
+        return true;
+    }
 }
