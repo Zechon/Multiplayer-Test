@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using TreeEditor;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class Voxel : MonoBehaviour
