@@ -54,6 +54,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ab0d06d0d645eb84980b89f743632379, type: 2}
   - {fileID: 11400000, guid: 96a153d9db64dc3419a13bfffe40a367, type: 2}
   - {fileID: 11400000, guid: a6cefb5ea9f6f92499b4ff44d02559eb, type: 2}
+  - {fileID: 11400000, guid: 17b1c17e4bbd40f409b657e91da5a359, type: 2}
   atlas: {fileID: 0}
   tileSize: 32
   normalAtlas: {fileID: 0}

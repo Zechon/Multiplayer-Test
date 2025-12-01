@@ -166,7 +166,6 @@ public class VoxelWorldEditor : MonoBehaviour
                     chunk.GenerateChunkMesh();
                     chunk.ApplyMesh();
 
-                    _ = SaveLoadManager.SaveChunkAsync(VoxelWorld.Instance.worldName, chunk, chunk.metadata);
                 }
 
         if (edit.changes.Count > 0)
@@ -212,7 +211,6 @@ public class VoxelWorldEditor : MonoBehaviour
             chunk.blocks[localPos.x, localPos.y, localPos.z] = undo ? change.previousID : change.newID;
             chunk.GenerateChunkMesh();
             chunk.ApplyMesh();
-            _ = SaveLoadManager.SaveChunkAsync(VoxelWorld.Instance.worldName, chunk, chunk.metadata);
         }
     }
 
