@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d58db16abe430045ad02528affaff74, type: 3}
+  m_Name: Worn_Concrete_Tile_1
+  m_EditorClassIdentifier: Assembly-CSharp::BlockClass
+  blockName: Worn Concrete Tile 1
+  blockFaceTextures:
+  - {fileID: 2800000, guid: 306617ae140eeb348be9f949089e2bbd, type: 3}
+  - {fileID: 2800000, guid: 306617ae140eeb348be9f949089e2bbd, type: 3}
+  - {fileID: 2800000, guid: 306617ae140eeb348be9f949089e2bbd, type: 3}
+  blockFaceNormalMaps:
+  - {fileID: 2800000, guid: 5edfc90fac6b855489539adbdf4ecc77, type: 3}
+  - {fileID: 2800000, guid: 5edfc90fac6b855489539adbdf4ecc77, type: 3}
+  - {fileID: 2800000, guid: 5edfc90fac6b855489539adbdf4ecc77, type: 3}
+  isSlab: 0
+  height: 1
+  uvSideHeight: 1
+  uvTopHeight: 1
+  uvBottomHeight: 1
