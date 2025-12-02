@@ -7,7 +7,7 @@ public class VoxelWorld : MonoBehaviour
 
     [Header("World Settings")]
     public string worldName = "DefaultWorld";
-    public Vector3Int initialSize = new Vector3Int(4, 1, 4); // x,y,z chunks
+    public Vector3Int initialSize = new Vector3Int(4, 1, 4);
 
     [Header("Voxel Systems")]
     public WorldGenerator generator;
@@ -36,24 +36,33 @@ public class VoxelWorld : MonoBehaviour
     {
         Vector3Int halfSize = new Vector3Int(initialSize.x / 2, initialSize.y / 2, initialSize.z / 2);
 
-        // Load all chunks in manifest
-        foreach (var coord in manifest.chunkCoordinates)
-        {
-            CreateChunk(coord);
-        }
+        List<Vector3Int> allChunkCoords = new List<Vector3Int>();
 
-        // If manifest empty, generate initial chunks
-        if (manifest.chunkCoordinates.Count == 0)
+        if (manifest.chunkCoordinates.Count > 0)
+            allChunkCoords.AddRange(manifest.chunkCoordinates);
+        else
         {
             for (int x = -halfSize.x; x < initialSize.x - halfSize.x; x++)
                 for (int y = -halfSize.y; y < initialSize.y - halfSize.y; y++)
                     for (int z = -halfSize.z; z < initialSize.z - halfSize.z; z++)
-                    {
-                        Vector3Int coord = new Vector3Int(x, y, z);
-                        CreateChunk(coord);
-                    }
+                        allChunkCoords.Add(new Vector3Int(x, y, z));
+        }
+
+        foreach (var coord in allChunkCoords)
+            CreateChunkObjectOnly(coord);
+  
+        if (manifest.chunkCoordinates.Count == 0)
+        {
+            foreach (var coord in allChunkCoords)
+                WorldManifestManager.AddChunk(manifest, coord);
 
             WorldManifestManager.SaveManifest(manifest);
+        }
+
+        foreach (var chunk in chunks.Values)
+        {
+            chunk.GenerateChunkMesh();
+            chunk.ApplyMesh();
         }
     }
 
@@ -65,7 +74,7 @@ public class VoxelWorld : MonoBehaviour
         return chunk;
     }
 
-    public Chunk CreateChunk(Vector3Int coord)
+    public Chunk CreateChunkObjectOnly(Vector3Int coord)
     {
         if (chunks.ContainsKey(coord))
             return chunks[coord];
@@ -74,19 +83,14 @@ public class VoxelWorld : MonoBehaviour
         go.transform.parent = transform;
         go.transform.position = new Vector3(coord.x, coord.y, coord.z) * chunkSize * cubeSize;
 
-        MeshFilter mf = go.GetComponent<MeshFilter>();
-        if (mf == null) mf = go.AddComponent<MeshFilter>();
-
-        MeshRenderer mr = go.GetComponent<MeshRenderer>();
-        if (mr == null) mr = go.AddComponent<MeshRenderer>();
-
-        MeshCollider mc = go.GetComponent<MeshCollider>();
-        if (mc == null) mc = go.AddComponent<MeshCollider>();
-
         Chunk chunk = go.AddComponent<Chunk>();
         chunk.chunkCoord = coord;
         chunk.cubeSize = cubeSize;
         chunk.blockManager = blockManager;
+
+        MeshFilter mf = go.GetComponent<MeshFilter>() ?? go.AddComponent<MeshFilter>();
+        MeshRenderer mr = go.GetComponent<MeshRenderer>() ?? go.AddComponent<MeshRenderer>();
+        MeshCollider mc = go.GetComponent<MeshCollider>() ?? go.AddComponent<MeshCollider>();
 
         Mesh mesh = new Mesh();
         chunk.mesh = mesh;
@@ -115,24 +119,15 @@ public class VoxelWorld : MonoBehaviour
         }
         else
         {
-            // Procedural generation
             generator?.FillChunk(this, chunk);
 
-            // Add to manifest
             WorldManifestManager.AddChunk(manifest, coord);
             WorldManifestManager.SaveManifest(manifest);
         }
 
-        // Build mesh and collider
-        chunk.GenerateChunkMesh();
-        chunk.ApplyMesh();
-        mc.sharedMesh = chunk.mesh;
-
-        // Set layer
-        chunk.gameObject.layer = LayerMask.NameToLayer("Ground");
-
-        // Store reference
         chunks[coord] = chunk;
+
+        chunk.gameObject.layer = LayerMask.NameToLayer("Ground");
 
         return chunk;
     }
@@ -154,20 +149,23 @@ public class VoxelWorld : MonoBehaviour
 
     public int GetBlock(int gx, int gy, int gz)
     {
-        Vector3Int c = new Vector3Int(
-            Mathf.FloorToInt(gx / (float)chunkSize),
-            Mathf.FloorToInt(gy / (float)chunkSize),
-            Mathf.FloorToInt(gz / (float)chunkSize)
-        );
+        GlobalToChunkLocal(gx, gy, gz, out Vector3Int chunkCoord, out Vector3Int local);
 
-        if (!chunks.TryGetValue(c, out Chunk chunk))
-            return 0;
+        if (!chunks.TryGetValue(chunkCoord, out Chunk chunk))
+            return 0; // missing chunk treated as air
 
-        int lx = gx - c.x * chunkSize;
-        int ly = gy - c.y * chunkSize;
-        int lz = gz - c.z * chunkSize;
+        return chunk.blocks[local.x, local.y, local.z];
+    }
 
-        return chunk.blocks[lx, ly, lz];
+    public void GlobalToChunkLocal(int gx, int gy, int gz, out Vector3Int chunkCoord, out Vector3Int local)
+    {
+        int cs = chunkSize;
+
+        // Determine chunk coordinates
+        chunkCoord = new Vector3Int(Mathf.FloorToInt(gx / (float)cs), Mathf.FloorToInt(gy / (float)cs), Mathf.FloorToInt(gz / (float)cs));
+
+        // Determine local coordinates inside that chunk (always 0..chunkSize-1)
+        local = new Vector3Int(((gx % cs) + cs) % cs,((gy % cs) + cs) % cs,((gz % cs) + cs) % cs);
     }
 
     #endregion
