@@ -51,24 +51,24 @@ public class VoxelWorldEditor : MonoBehaviour
     private void Update()
     {
         HandleInput();
-        //ApplyQueuedChunks();
+        ApplyQueuedChunks();
         UpdatePreview();
     }
 
     #region Async Chunk Queue
 
-    //private void ApplyQueuedChunks()
-    //{
-    //    while (applyQueue.Count > 0)
-    //    {
-    //        var item = applyQueue.Dequeue();
-    //        Chunk chunk = VoxelWorld.Instance.CreateChunk(item.coord);
-    //        chunk.blocks = item.data.blocks;
-    //        chunk.metadata = item.data.meta;
-    //        chunk.GenerateChunkMesh();
-    //        chunk.ApplyMesh();
-    //    }
-    //}
+    private void ApplyQueuedChunks()
+    {
+        while (applyQueue.Count > 0)
+        {
+            var item = applyQueue.Dequeue();
+            Chunk chunk = VoxelWorld.Instance.CreateChunk(item.coord);
+            chunk.blocks = item.data.blocks;
+            chunk.metadata = item.data.meta;
+            chunk.GenerateChunkMesh();
+            chunk.ApplyMesh();
+        }
+    }
 
     public async Task LoadChunkEditor(Vector3Int coord)
     {
@@ -150,8 +150,7 @@ public class VoxelWorldEditor : MonoBehaviour
                     );
 
                     Chunk chunk = VoxelWorld.Instance.GetChunk(chunkCoord);
-
-                    //if (chunk == null) chunk = VoxelWorld.Instance.CreateChunk(chunkCoord);
+                    if (chunk == null) chunk = VoxelWorld.Instance.CreateChunk(chunkCoord);
 
                     Vector3Int localPos = pos - chunkCoord * cs;
                     if (!IsInsideChunk(localPos)) continue;

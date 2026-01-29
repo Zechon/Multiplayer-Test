@@ -7,6 +7,8 @@ public class ChunkMeshData
     public List<int> tris;
     public List<Vector2> uvs;
 
+    public int vertIndex;
+
     public static readonly Vector3[] faceDirs = {
         Vector3.forward, Vector3.back,
         Vector3.right, Vector3.left,
@@ -24,10 +26,10 @@ public class ChunkMeshData
 
     public ChunkMeshData(int chunkSize)
     {
-        int maxFaces = chunkSize * chunkSize * chunkSize * 6;
-        verts = new List<Vector3>(maxFaces * 4);
-        tris = new List<int>(maxFaces * 6);
-        uvs = new List<Vector2>(maxFaces * 4);
+        verts = new List<Vector3>(chunkSize * chunkSize * chunkSize * 6);
+        tris = new List<int>(chunkSize * chunkSize * chunkSize * 6);
+        uvs = new List<Vector2>(chunkSize * chunkSize * chunkSize * 6);
+        vertIndex = 0;
     }
 
     public void Clear()
@@ -35,13 +37,7 @@ public class ChunkMeshData
         verts.Clear();
         tris.Clear();
         uvs.Clear();
-    }
-
-    public void EnsureCapacity(int expectedVerts, int expectedTris, int expectedUVs)
-    {
-        if (verts.Capacity < expectedVerts) verts.Capacity = expectedVerts;
-        if (tris.Capacity < expectedTris) tris.Capacity = expectedTris;
-        if (uvs.Capacity < expectedUVs) uvs.Capacity = expectedUVs;
+        vertIndex = 0;
     }
 }
 
