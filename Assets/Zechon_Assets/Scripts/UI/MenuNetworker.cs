@@ -13,16 +13,12 @@ using Unity.Services.Relay;
 using System.Threading.Tasks;
 using Unity.Services.Relay.Models;
 
-public class NetworkUI : MonoBehaviour
+public class MenuNetworker : MonoBehaviour
 {
     [Header("Network Manager")]
     public UnityTransport ntwk;
 
     [Header("UI References (Assign in Inspector)")]
-    public Button hostButton;
-    public Button clientButton;
-    public Button lanButton;
-    public Button onlineButton;
     public TMP_Text statusLabel;
     public TMP_InputField usernameInput;
     public TMP_InputField portInput;
@@ -42,9 +38,6 @@ public class NetworkUI : MonoBehaviour
 
     private async void Awake()
     {
-        SetLANButtons(false);
-        SetOButtons(false);
-
         await Authenticate();
     }
 
@@ -58,11 +51,11 @@ public class NetworkUI : MonoBehaviour
 
     private void OnEnable()
     {
-        if (ipInput != null)
-            ipInput.text = GetLocalIPAddress();
-
-        if (portInput != null)
-            portInput.text = "7777";
+        //if (ipInput != null)
+        //    ipInput.text = GetLocalIPAddress();
+        //
+        //if (portInput != null)
+        //    portInput.text = "7777";
     }
 
 
@@ -82,7 +75,6 @@ public class NetworkUI : MonoBehaviour
 
         SendUsernameToPlayer();
 
-        ModeButtonsToggle(false);
         SetLANButtons(false);
     }
 
@@ -101,7 +93,6 @@ public class NetworkUI : MonoBehaviour
                 SendUsernameToPlayer();
         };
 
-        ModeButtonsToggle(false);
         SetLANButtons(false);
     }
 
@@ -149,8 +140,6 @@ public class NetworkUI : MonoBehaviour
 
     private void SetLANButtons(bool state)
     {
-        hostButton.gameObject.SetActive(state);
-        clientButton.gameObject.SetActive(state);
         usernameInput.gameObject.SetActive(state);
         portInput.gameObject.SetActive(state);
         ipInput.gameObject.SetActive(state);
@@ -188,14 +177,14 @@ public class NetworkUI : MonoBehaviour
     }
     private void Start()
     {
-        NetworkManager.Singleton.OnClientConnectedCallback += id =>
-        {
-            Debug.Log($"Client connected: {id}");
-        };
-        NetworkManager.Singleton.OnClientDisconnectCallback += id =>
-        {
-            Debug.Log($"Client disconnected: {id}");
-        };
+        //NetworkManager.Singleton.OnClientConnectedCallback += id =>
+        //{
+        //    Debug.Log($"Client connected: {id}");
+        //};
+        //NetworkManager.Singleton.OnClientDisconnectCallback += id =>
+        //{
+        //    Debug.Log($"Client disconnected: {id}");
+        //};
     }
 
     private string GetLocalIPAddress()
@@ -225,14 +214,12 @@ public class NetworkUI : MonoBehaviour
     {
         SetLANButtons(true);
         SetOButtons(false);
-        ModeButtonsToggle(false);
     }
 
     public void OnlineChosen()
     {
         SetLANButtons(false);
         SetOButtons(true);
-        ModeButtonsToggle(false);
     }
 
     private void SetOButtons(bool state)
@@ -241,13 +228,6 @@ public class NetworkUI : MonoBehaviour
         _oJoin.gameObject.SetActive(state);
         usernameInput.gameObject.SetActive(state);
         _joinInput.gameObject.SetActive(state);
-    }
-
-
-    private void ModeButtonsToggle(bool state)
-    {
-        lanButton.gameObject.SetActive(state);
-        onlineButton.gameObject.SetActive(state);
     }
 
     public async void HostGame()
@@ -261,7 +241,6 @@ public class NetworkUI : MonoBehaviour
 
         SendUsernameToPlayer();
 
-        ModeButtonsToggle(false);
         SetLANButtons(false);
         SetOButtons(false);
     }
@@ -277,7 +256,6 @@ public class NetworkUI : MonoBehaviour
 
         NetworkManager.Singleton.StartClient();
 
-        ModeButtonsToggle(false);
         SetLANButtons(false);
         SetOButtons(false);
     }

@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
 public class MainMenuHandler : MonoBehaviour
@@ -18,11 +20,13 @@ public class MainMenuHandler : MonoBehaviour
 
     [Header("References")]
     private PlayerInputHandler input;
+    private MenuNetworker networker;
+    private Animator mainAnim;
     #endregion
 
     private void Start()
     {
-        if (input == null) input = GetComponent<PlayerInputHandler>();
+        SetupComponents();
 
         CloseSubMenus();
     }
@@ -32,7 +36,15 @@ public class MainMenuHandler : MonoBehaviour
         if (input.PausePressed) CloseSubMenus();
     }
 
-    #region Public Functions
+    private void SetupComponents()
+    {
+        if (input == null) input = GetComponent<PlayerInputHandler>();
+        //if (networker == null) networker = GetComponent<MenuNetworker>();
+
+        if (mainAnim == null) mainAnim = MainMenu.GetComponent<Animator>();
+    }
+
+    #region Public Functions + Helpers
     public void CloseSubMenus()
     {
         if (lanOpen)
@@ -48,6 +60,40 @@ public class MainMenuHandler : MonoBehaviour
         }
 
         MainMenu.SetActive(true);
+    }
+    public void OpenLanMenu()
+    {
+        StartCoroutine(OpenLan());
+    }
+
+    private IEnumerator OpenLan()
+    {
+        LAN.SetActive(true);
+        lanOpen = true;
+
+        mainAnim.SetBool("Closed", true);
+        //AnimationClip clip = mainAnim.GetCurrentAnimatorClipInfo;
+
+        yield return new WaitForSeconds(2);
+        MainMenu.SetActive(false);
+    }
+
+    public void OpenOnlineMenu()
+    {
+        //Coming soon
+    }
+
+    public void OpenSettings()
+    {
+        settingsOpen = true;
+        Settings.SetActive(true);
+
+        MainMenu.SetActive(false);
+    }
+
+    public void MainMenuQuit()
+    {
+        Application.Quit();
     }
     #endregion
 }
