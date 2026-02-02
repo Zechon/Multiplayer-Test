@@ -1,5 +1,5 @@
 using System.Collections;
-using System.Security.Cryptography.X509Certificates;
+using TMPro;
 using UnityEngine;
 
 public class MainMenuHandler : MonoBehaviour
@@ -13,6 +13,7 @@ public class MainMenuHandler : MonoBehaviour
     [Header("Bools")]
     private bool settingsOpen = true;
     private bool lanOpen = true;
+    private bool host = true;
 
     [Header("Scenes")]
     [SerializeField] private string DevScn1Name;
@@ -22,13 +23,23 @@ public class MainMenuHandler : MonoBehaviour
     private PlayerInputHandler input;
     private MenuNetworker networker;
     private Animator mainAnim;
+    private Animator lanAnim;
+    private GameObject MainButtons;
+    private GameObject LanButtons;
     #endregion
 
     private void Start()
     {
         SetupComponents();
 
-        CloseSubMenus();
+        lanOpen = false;
+        lanAnim.SetBool("Closed", true);
+
+        settingsOpen = false;
+        Settings.SetActive(false);
+
+        MainMenu.SetActive(true);
+        mainAnim.SetBool("Closed", false);
     }
 
     private void Update()
@@ -39,9 +50,12 @@ public class MainMenuHandler : MonoBehaviour
     private void SetupComponents()
     {
         if (input == null) input = GetComponent<PlayerInputHandler>();
-        //if (networker == null) networker = GetComponent<MenuNetworker>();
+        if (networker == null) networker = GetComponent<MenuNetworker>();
 
         if (mainAnim == null) mainAnim = MainMenu.GetComponent<Animator>();
+        if(lanAnim == null) lanAnim = LAN.GetComponent<Animator>();
+        if (MainButtons == null) MainButtons = MainMenu.transform.GetChild(0).gameObject;
+        if (LanButtons == null) LanButtons = LAN.transform.GetChild(0).gameObject;
     }
 
     #region Public Functions + Helpers
@@ -49,8 +63,7 @@ public class MainMenuHandler : MonoBehaviour
     {
         if (lanOpen)
         {
-            lanOpen = false;
-            LAN.SetActive(false);
+            StartCoroutine(CloseLan());
         }
 
         if (settingsOpen)
@@ -58,9 +71,8 @@ public class MainMenuHandler : MonoBehaviour
             settingsOpen = false;
             Settings.SetActive(false);
         }
-
-        MainMenu.SetActive(true);
     }
+
     public void OpenLanMenu()
     {
         StartCoroutine(OpenLan());
@@ -68,14 +80,29 @@ public class MainMenuHandler : MonoBehaviour
 
     private IEnumerator OpenLan()
     {
-        LAN.SetActive(true);
-        lanOpen = true;
-
         mainAnim.SetBool("Closed", true);
-        //AnimationClip clip = mainAnim.GetCurrentAnimatorClipInfo;
 
-        yield return new WaitForSeconds(2);
-        MainMenu.SetActive(false);
+        yield return new WaitForSeconds(1);
+
+        lanAnim.SetBool("Closed", false);
+        lanOpen = true;
+    }
+    private IEnumerator CloseLan()
+    {
+        lanAnim.SetBool("Closed", true);
+
+        yield return new WaitForSeconds(0.95f);
+
+        mainAnim.SetBool("Closed", false);
+    }
+
+    public void HostTransition()
+    {
+        GameObject StartHost = LanButtons.transform.GetChild(3).gameObject;
+        TMP_Text ipText = StartHost.transform.GetChild(0).GetComponent<TMP_Text>();
+
+        ipText.text = networker.GetLocalIPAddress();
+        host = true;
     }
 
     public void OpenOnlineMenu()

@@ -49,15 +49,6 @@ public class MenuNetworker : MonoBehaviour
         Debug.Log("[Unity Services] Authenticated as: " + AuthenticationService.Instance.PlayerId);
     }
 
-    private void OnEnable()
-    {
-        //if (ipInput != null)
-        //    ipInput.text = GetLocalIPAddress();
-        //
-        //if (portInput != null)
-        //    portInput.text = "7777";
-    }
-
 
     public void OnHostButtonClickedLAN()
     {
@@ -147,7 +138,7 @@ public class MenuNetworker : MonoBehaviour
 
     private void SetStatusText(string text)
     {
-        statusLabel.text = text;
+        //statusLabel.text = text;
     }
 
     private void UpdateStatusLabels()
@@ -187,7 +178,7 @@ public class MenuNetworker : MonoBehaviour
         //};
     }
 
-    private string GetLocalIPAddress()
+    public string GetLocalIPAddress()
     {
         foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
         {

@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: a43d3b11e6e71d44297d6b10b149e087
+guid: 6a34e0d33e6566247beeaaa012f531fe
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
@@ -9,7 +9,7 @@ TrueTypeFontImporter:
   characterPadding: 1
   includeFontData: 1
   fontNames:
-  - Zombie
+  - Iron Lung
   fallbackFontReferences: []
   customCharacters: 
   fontRenderingMode: 0
