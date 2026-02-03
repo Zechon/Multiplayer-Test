@@ -13,7 +13,8 @@ public class MainMenuHandler : MonoBehaviour
     [Header("Bools")]
     private bool settingsOpen = true;
     private bool lanOpen = true;
-    private bool host = true;
+    private bool host = false;
+    private bool join = false;
 
     [Header("Scenes")]
     [SerializeField] private string DevScn1Name;
@@ -28,6 +29,7 @@ public class MainMenuHandler : MonoBehaviour
     private GameObject LanButtons;
     #endregion
 
+    #region Default Stuff
     private void Start()
     {
         SetupComponents();
@@ -40,6 +42,8 @@ public class MainMenuHandler : MonoBehaviour
 
         MainMenu.SetActive(true);
         mainAnim.SetBool("Closed", false);
+
+        host = false;
     }
 
     private void Update()
@@ -58,7 +62,6 @@ public class MainMenuHandler : MonoBehaviour
         if (LanButtons == null) LanButtons = LAN.transform.GetChild(0).gameObject;
     }
 
-    #region Public Functions + Helpers
     public void CloseSubMenus()
     {
         if (lanOpen)
@@ -72,7 +75,9 @@ public class MainMenuHandler : MonoBehaviour
             Settings.SetActive(false);
         }
     }
+    #endregion
 
+    #region LAN
     public void OpenLanMenu()
     {
         StartCoroutine(OpenLan());
@@ -91,25 +96,80 @@ public class MainMenuHandler : MonoBehaviour
     {
         lanAnim.SetBool("Closed", true);
 
-        yield return new WaitForSeconds(0.95f);
+        yield return new WaitForSeconds(1);
 
         mainAnim.SetBool("Closed", false);
+        lanAnim.SetBool("OpenH", false);
+        lanAnim.SetBool("OpenJ", false);
     }
 
-    public void HostTransition()
+    public void LanHostPromptActivation()
     {
-        GameObject StartHost = LanButtons.transform.GetChild(3).gameObject;
+        if (!host) StartCoroutine(LanHostPromptOpen());
+        else StartCoroutine(LanHostPromptClose());
+    }
+
+    private IEnumerator LanHostPromptOpen()
+    {
+        GameObject StartHost = LanButtons.transform.GetChild(4).gameObject;
+        TMP_Text ipText = StartHost.transform.GetChild(0).GetComponent<TMP_Text>();
+        //ipText.text = networker.GetLocalIPAddress();
+        ipText.text = "test IP";
+
+        lanAnim.SetBool("OpenH", true);
+        yield return new WaitForSeconds(0.5f);
+
+        host = true;
+        join = false;
+
+        lanAnim.SetBool("OpenJ", false);
+    }
+
+    private IEnumerator LanHostPromptClose()
+    {
+        lanAnim.SetBool("OpenH", false);
+        yield return new WaitForSeconds(0.5f);
+
+        host = false;
+    }
+
+    public void LanJoinPromptActivation()
+    {
+        if (!join) StartCoroutine(LanJoinPromptOpen());
+        else StartCoroutine(LanJoinPromptClose());
+    }
+
+    private IEnumerator LanJoinPromptOpen()
+    {
+        GameObject StartHost = LanButtons.transform.GetChild(5).gameObject;
         TMP_Text ipText = StartHost.transform.GetChild(0).GetComponent<TMP_Text>();
 
-        ipText.text = networker.GetLocalIPAddress();
-        host = true;
+        lanAnim.SetBool("OpenJ", true);
+        yield return new WaitForSeconds(0.5f);
+
+        join = true;
+        host = false;
+
+        lanAnim.SetBool("OpenH", false);
     }
 
+    private IEnumerator LanJoinPromptClose()
+    {
+        lanAnim.SetBool("OpenJ", false);
+        yield return new WaitForSeconds(0.5f);
+
+        join = false;
+    }
+    #endregion
+
+    #region Online
     public void OpenOnlineMenu()
     {
         //Coming soon
     }
+    #endregion
 
+    #region Settings + Quit
     public void OpenSettings()
     {
         settingsOpen = true;
