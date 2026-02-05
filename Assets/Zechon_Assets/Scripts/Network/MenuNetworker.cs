@@ -49,11 +49,10 @@ public class MenuNetworker : MonoBehaviour
         Debug.Log("[Unity Services] Authenticated as: " + AuthenticationService.Instance.PlayerId);
     }
 
-
-    public void OnHostButtonClickedLAN()
+    public void HostClickedLAN(string portInput)
     {
         string hostIp = GetLocalIPAddress();
-        ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
+        ushort port = ushort.TryParse(portInput, out ushort parsedPort) ? parsedPort : (ushort)7777;
 
         ntwk.SetConnectionData(hostIp, port);
 
@@ -61,18 +60,16 @@ public class MenuNetworker : MonoBehaviour
 
         Debug.Log($"[Host] Hosting on {hostIp}:{port}");
 
-        if (ipInput != null)
-            ipInput.text = hostIp;
+        NetworkManager.Singleton.SceneManager.LoadScene("MP_VOX_TEST", UnityEngine.SceneManagement.LoadSceneMode.Single);
 
-        SendUsernameToPlayer();
-
-        SetLANButtons(false);
+        var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+        playerObject.transform.position = spawnPosition;
     }
 
-    public void OnClientButtonClickedLAN()
+    public void ClientClickedLAN(string ipInput, string portInput)
     {
-        string ip = string.IsNullOrEmpty(ipInput.text) ? "127.0.0.1" : ipInput.text;
-        ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
+        string ip = string.IsNullOrEmpty(ipInput) ? "127.0.0.1" : ipInput;
+        ushort port = ushort.TryParse(portInput, out ushort parsedPort) ? parsedPort : (ushort)7777;
 
         ntwk.SetConnectionData(ip, port);
 
@@ -81,12 +78,12 @@ public class MenuNetworker : MonoBehaviour
         NetworkManager.Singleton.OnClientConnectedCallback += id =>
         {
             if (id == NetworkManager.Singleton.LocalClientId)
-                SendUsernameToPlayer();
+            {
+                var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+                playerObject.transform.position = spawnPosition + new Vector3(0,20, 0);
+            }
         };
-
-        SetLANButtons(false);
     }
-
     private void SendUsernameToPlayer()
     {
         string username = usernameInput.text;
@@ -104,11 +101,6 @@ public class MenuNetworker : MonoBehaviour
         {
             handler.RequestSetUsername(username);
         }
-    }
-
-    private void Update()
-    {
-        UpdateUI();
     }
 
     void UpdateUI()

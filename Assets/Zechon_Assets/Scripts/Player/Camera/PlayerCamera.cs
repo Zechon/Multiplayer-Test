@@ -21,12 +21,7 @@ public class PlayerCamera : NetworkBehaviour
 
     void Start()
     {
-        mainCam = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
-        mainListener = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<AudioListener>();
-        mainCam.enabled = false;
-        mainListener.enabled = false;
-
-        pauseHandler = GameObject.FindGameObjectWithTag("Pause").GetComponent<PauseMenuHandler>();
+        //pauseHandler = GameObject.FindGameObjectWithTag("Pause").GetComponent<PauseMenuHandler>();
 
         if (!IsOwner)
         {

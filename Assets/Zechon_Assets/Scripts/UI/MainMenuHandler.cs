@@ -59,7 +59,6 @@ public class MainMenuHandler : MonoBehaviour
         if (mainAnim == null) mainAnim = MainMenu.GetComponent<Animator>();
         if(lanAnim == null) lanAnim = LAN.GetComponent<Animator>();
         if (MainButtons == null) MainButtons = MainMenu.transform.GetChild(0).gameObject;
-        if (LanButtons == null) LanButtons = LAN.transform.GetChild(0).gameObject;
     }
 
     public void CloseSubMenus()
@@ -92,6 +91,7 @@ public class MainMenuHandler : MonoBehaviour
         lanAnim.SetBool("Closed", false);
         lanOpen = true;
     }
+
     private IEnumerator CloseLan()
     {
         lanAnim.SetBool("Closed", true);
@@ -111,10 +111,11 @@ public class MainMenuHandler : MonoBehaviour
 
     private IEnumerator LanHostPromptOpen()
     {
-        GameObject StartHost = LanButtons.transform.GetChild(4).gameObject;
-        TMP_Text ipText = StartHost.transform.GetChild(0).GetComponent<TMP_Text>();
+        GameObject PopupHolder = LAN.transform.GetChild(1).gameObject;
+        GameObject Popup = PopupHolder.transform.GetChild(0).gameObject;
+        TMP_Text ipText = Popup.transform.GetChild(3).GetComponent<TMP_Text>();
         //ipText.text = networker.GetLocalIPAddress();
-        ipText.text = "test IP";
+        ipText.text = "Your IP";
 
         lanAnim.SetBool("OpenH", true);
         yield return new WaitForSeconds(0.5f);
@@ -141,8 +142,8 @@ public class MainMenuHandler : MonoBehaviour
 
     private IEnumerator LanJoinPromptOpen()
     {
-        GameObject StartHost = LanButtons.transform.GetChild(5).gameObject;
-        TMP_Text ipText = StartHost.transform.GetChild(0).GetComponent<TMP_Text>();
+        GameObject PopupHolder = LAN.transform.GetChild(1).gameObject;
+        GameObject Popup = PopupHolder.transform.GetChild(1).gameObject;
 
         lanAnim.SetBool("OpenJ", true);
         yield return new WaitForSeconds(0.5f);
@@ -159,6 +160,25 @@ public class MainMenuHandler : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         join = false;
+    }
+
+    public void LanHost()
+    {
+        GameObject PopupHolder = LAN.transform.GetChild(1).gameObject;
+        GameObject Popup = PopupHolder.transform.GetChild(0).gameObject;
+        TMP_InputField input = Popup.transform.GetChild(5).GetComponent<TMP_InputField>();
+
+        networker.HostClickedLAN(input.text);
+    }
+
+    public void LanJoin()
+    {
+        GameObject PopupHolder = LAN.transform.GetChild(1).gameObject;
+        GameObject Popup = PopupHolder.transform.GetChild(1).gameObject;
+        TMP_InputField ipInput = Popup.transform.GetChild(3).GetComponent<TMP_InputField>();
+        TMP_InputField portInput = Popup.transform.GetChild(5).GetComponent<TMP_InputField>();
+
+        networker.ClientClickedLAN(ipInput.text, portInput.text);
     }
     #endregion
 

@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovement : NetworkBehaviour
 {
     #region Variables
     public enum MovementState
@@ -57,12 +58,13 @@ public class PlayerMovement : MonoBehaviour
     {
         originalHeight = controller.height;
         originalCenter = controller.center;
-        pauseHandler = GameObject.FindGameObjectWithTag("Pause").GetComponent<PauseMenuHandler>();
+        //pauseHandler = GameObject.FindGameObjectWithTag("Pause").GetComponent<PauseMenuHandler>();
     }
 
     private void Update()
     {
-        if (pauseHandler != null || pauseHandler.paused) return;
+        if (!IsOwner) return;
+        if (pauseHandler != null && pauseHandler.paused) return;
 
         //Ground Check
         grounded = IsGrounded(out groundHit);
@@ -208,5 +210,14 @@ public class PlayerMovement : MonoBehaviour
         Vector3 UC_origin = transform.position + Vector3.up * (controller.center.y + controller.height / 2f + standDelta);
         Gizmos.DrawWireSphere(UC_origin, ceilingCheckRadius);
     }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner)
+        {
+            GetComponentInChildren<Camera>(true).gameObject.SetActive(true);
+        }
+    }
+
     #endregion
 }
