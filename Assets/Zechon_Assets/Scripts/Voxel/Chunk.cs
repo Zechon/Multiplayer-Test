@@ -1,9 +1,11 @@
 using UnityEngine;
 using System.Collections.Generic;
 using static UnityEngine.Mesh;
+using Unity.Netcode;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
-public class Chunk : MonoBehaviour
+[RequireComponent (typeof (NetworkObject))]
+public class Chunk : NetworkBehaviour
 {
     public int[,,] blocks = new int[16, 16, 16];
 
@@ -23,6 +25,12 @@ public class Chunk : MonoBehaviour
     }
 
     #region Mesh Generation
+
+    public void BuildMesh()
+    {
+        GenerateChunkMesh();
+        ApplyMesh();
+    }
 
     public void GenerateChunkMesh()
     {

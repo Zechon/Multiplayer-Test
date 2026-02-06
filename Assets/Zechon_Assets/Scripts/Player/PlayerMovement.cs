@@ -74,6 +74,7 @@ public class PlayerMovement : NetworkBehaviour
         HandleMovement();
         HandleGravity();
         HandleCrouch();
+        oobTeleport();
 
         DebugMyStuff();
     }
@@ -85,6 +86,11 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 moveDir = orientation.forward * moveInput.y + orientation.right * moveInput.x;
 
         controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
+    }
+
+    private void oobTeleport()
+    {
+        if (transform.position.y < -50) transform.position = new Vector3(0, 20, 0);
     }
 
     private void HandleGravity()

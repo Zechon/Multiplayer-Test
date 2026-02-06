@@ -80,7 +80,7 @@ public class MenuNetworker : MonoBehaviour
             if (id == NetworkManager.Singleton.LocalClientId)
             {
                 var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                playerObject.transform.position = spawnPosition + new Vector3(0,20, 0);
+                playerObject.transform.position = new Vector3(0, 20, 0);
             }
         };
     }

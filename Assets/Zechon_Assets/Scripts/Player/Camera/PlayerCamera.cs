@@ -1,7 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 
-public class PlayerCamera : NetworkBehaviour
+public class PlayerCamera : MonoBehaviour
 {
     [Header("Sensitivity")]
     [SerializeField] float sensX;
@@ -23,7 +23,7 @@ public class PlayerCamera : NetworkBehaviour
     {
         //pauseHandler = GameObject.FindGameObjectWithTag("Pause").GetComponent<PauseMenuHandler>();
 
-        if (!IsOwner)
+        if (!GetComponentInParent<NetworkObject>().IsOwner)
         {
             playerCam.enabled = false;
             listener.enabled = false;
@@ -34,7 +34,7 @@ public class PlayerCamera : NetworkBehaviour
 
     private void LateUpdate()
     {
-        if (!IsOwner) return;
+        if (!GetComponentInParent<NetworkObject>().IsOwner) return;
 
         if (pauseHandler != null && pauseHandler.paused) return;
 
