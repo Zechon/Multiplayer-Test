@@ -2,11 +2,22 @@ using UnityEngine;
 using System.Collections.Generic;
 using static UnityEngine.Mesh;
 using Unity.Netcode;
+using System;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
 [RequireComponent (typeof (NetworkObject))]
 public class Chunk : NetworkBehaviour
 {
+    private static readonly Vector3Int[] NeighborDirs =
+    {
+        Vector3Int.right,
+        Vector3Int.left,
+        Vector3Int.up,
+        Vector3Int.down,
+        Vector3Int.forward,
+        Vector3Int.back
+    };
+
     public int[,,] blocks = new int[16, 16, 16];
 
     public Mesh mesh;
@@ -19,15 +30,30 @@ public class Chunk : NetworkBehaviour
     public ChunkMetadata metadata;
     public BlockManager blockManager;
 
+    public NetworkVariable<ChunkBlockData> BlockData =
+    new(writePerm: NetworkVariableWritePermission.Server);
+
     private void Awake()
     {
         meshData = new ChunkMeshData(16);
     }
 
-    #region Mesh Generation
+    public override void OnNetworkSpawn()
+    {
+        BlockData.OnValueChanged += OnBlockDataChanged;
+
+        if (IsServer)
+        {
+            SetBlocksFromServer(blocks);
+        }
+    }
+
 
     public void BuildMesh()
     {
+        if (IsServer && !IsHost)
+            return;
+
         GenerateChunkMesh();
         ApplyMesh();
     }
@@ -126,9 +152,8 @@ public class Chunk : NetworkBehaviour
         meshData.uvs.Add(new Vector2(xOffset + tileSizeU, yOffset)); // bottom-right
     }
 
-    #endregion
+ 
 
-    #region Apply Mesh
 
     public void ApplyMesh()
     {
@@ -154,6 +179,80 @@ public class Chunk : NetworkBehaviour
         mc.sharedMesh = null;
         mc.sharedMesh = mesh;
     }
+    public void SetBlocksFromServer(int[,,] src)
+    {
+        if (!IsServer) return;
 
-    #endregion
+        byte[] flat = SerializeBlocks(src);
+
+        BlockData.Value = new ChunkBlockData
+        {
+            data = flat
+        };
+    }
+
+    private void OnBlockDataChanged(ChunkBlockData previous, ChunkBlockData current)
+    {
+        if (current.data == null || current.data.Length == 0)
+            return;
+
+        DeserializeBlocks(current.data);
+        BuildMesh();
+    }
+
+    byte[] SerializeBlocks(int[,,] src)
+    {
+        byte[] data = new byte[16 * 16 * 16];
+        int i = 0;
+
+        for (int x = 0; x < 16; x++)
+            for (int y = 0; y < 16; y++)
+                for (int z = 0; z < 16; z++)
+                    data[i++] = (byte)src[x, y, z];
+
+        return data;
+    }
+
+    void DeserializeBlocks(byte[] data)
+    {
+        int i = 0;
+
+        for (int x = 0; x < 16; x++)
+            for (int y = 0; y < 16; y++)
+                for (int z = 0; z < 16; z++)
+                    blocks[x, y, z] = data[i++];
+    }
 }
+
+public struct ChunkBlockData : INetworkSerializable, System.IEquatable<ChunkBlockData>
+{
+    public byte[] data;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer)
+        where T : IReaderWriter
+    {
+        int length = data == null ? 0 : data.Length;
+        serializer.SerializeValue(ref length);
+
+        if (serializer.IsReader)
+            data = new byte[length];
+
+        for (int i = 0; i < length; i++)
+            serializer.SerializeValue(ref data[i]);
+    }
+
+    public bool Equals(ChunkBlockData other)
+    {
+        if (data == null || other.data == null)
+            return false;
+        if (data.Length != other.data.Length)
+            return false;
+
+        for (int i = 0; i < data.Length; i++)
+            if (data[i] != other.data[i])
+                return false;
+
+        return true;
+    }
+}
+

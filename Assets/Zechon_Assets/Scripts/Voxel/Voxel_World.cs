@@ -1,7 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class VoxelWorld : MonoBehaviour
+public class VoxelWorld : NetworkBehaviour
 {
     public static VoxelWorld Instance { get; private set; }
 
@@ -13,6 +14,9 @@ public class VoxelWorld : MonoBehaviour
     public WorldGenerator generator;
     public BlockManager blockManager;
     public Material blockMaterial;
+
+    [Header("Networking")]
+    public Chunk chunkPrefab;
 
     [Header("Chunk Settings")]
     public int chunkSize = 16;
@@ -34,6 +38,8 @@ public class VoxelWorld : MonoBehaviour
 
     private void Start()
     {
+        if (!IsServer) return;
+
         Vector3Int halfSize = new Vector3Int(initialSize.x / 2, initialSize.y / 2, initialSize.z / 2);
 
         // Load all chunks in manifest
@@ -67,75 +73,29 @@ public class VoxelWorld : MonoBehaviour
 
     public Chunk CreateChunk(Vector3Int coord)
     {
-        if (chunks.ContainsKey(coord))
-            return chunks[coord];
+        if (!IsServer)
+            return null;
 
-        GameObject go = new GameObject($"Chunk_{coord.x}_{coord.y}_{coord.z}");
-        go.transform.parent = transform;
-        go.transform.position = new Vector3(coord.x, coord.y, coord.z) * chunkSize * cubeSize;
+        if (chunks.TryGetValue(coord, out var existing))
+            return existing;
 
-        MeshFilter mf = go.GetComponent<MeshFilter>();
-        if (mf == null) mf = go.AddComponent<MeshFilter>();
+        Chunk chunk = Instantiate(chunkPrefab, transform);
 
-        MeshRenderer mr = go.GetComponent<MeshRenderer>();
-        if (mr == null) mr = go.AddComponent<MeshRenderer>();
-
-        MeshCollider mc = go.GetComponent<MeshCollider>();
-        if (mc == null) mc = go.AddComponent<MeshCollider>();
-
-        Chunk chunk = go.AddComponent<Chunk>();
         chunk.chunkCoord = coord;
         chunk.cubeSize = cubeSize;
         chunk.blockManager = blockManager;
+        chunk.numTexs = blockManager.allBlocks.Length;
 
-        Mesh mesh = new Mesh();
-        chunk.mesh = mesh;
-        mf.sharedMesh = mesh;
+        chunk.transform.position =
+            new Vector3(coord.x, coord.y, coord.z) * chunkSize * cubeSize;
 
-        // Assign material
-        if (blockMaterial != null)
-        {
-            mr.material = blockMaterial;
-            if (blockManager != null && blockManager.atlas != null)
-            {
-                mr.material.mainTexture = blockManager.atlas;
-                if (blockManager.normalAtlas != null)
-                    mr.material.SetTexture("_BumpMap", blockManager.normalAtlas);
+        NetworkObject netObj = chunk.GetComponent<NetworkObject>();
+        netObj.Spawn(true);
 
-                chunk.numTexs = blockManager.allBlocks.Length;
-            }
-        }
-
-        // Load saved chunk if exists
-        var loaded = SaveLoadManager.LoadChunk(worldName, coord);
-        if (loaded.HasValue)
-        {
-            chunk.blocks = loaded.Value.blocks;
-            chunk.metadata = loaded.Value.meta;
-        }
-        else
-        {
-            // Procedural generation
-            generator?.FillChunk(this, chunk);
-
-            // Add to manifest
-            WorldManifestManager.AddChunk(manifest, coord);
-            WorldManifestManager.SaveManifest(manifest);
-        }
-
-        // Build mesh and collider
-        chunk.GenerateChunkMesh();
-        chunk.ApplyMesh();
-        mc.sharedMesh = chunk.mesh;
-
-        // Set layer
-        chunk.gameObject.layer = LayerMask.NameToLayer("Ground");
-
-        // Store reference
-        chunks[coord] = chunk;
-
+        chunks.Add(coord, chunk);
         return chunk;
     }
+
 
     [ContextMenu("Save All Chunks")]
     public void SaveAllChunks()

@@ -36,26 +36,15 @@ public class WorldManager : NetworkBehaviour
 
         if (loaded.HasValue)
         {
-            chunk.blocks = loaded.Value.blocks;
+            chunk.SetBlocksFromServer(loaded.Value.blocks);
         }
         else
         {
             generator.FillChunk(voxelWorld, chunk);
+            chunk.SetBlocksFromServer(chunk.blocks);
             SaveLoadManager.SaveChunk(worldName, chunk);
         }
 
         loadedChunks.Add(coord, chunk);
-
-        // Tell clients to build mesh
-        BuildChunkClientRpc(coord);
-    }
-
-    [ClientRpc]
-    void BuildChunkClientRpc(Vector3Int coord)
-    {
-        if (!loadedChunks.TryGetValue(coord, out var chunk))
-            chunk = voxelWorld.GetChunk(coord);
-
-        chunk.BuildMesh();
     }
 }
