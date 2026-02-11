@@ -5195,7 +5195,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MenuNetworker
   ntwk: {fileID: 797885923}
   statusLabel: {fileID: 0}
-  usernameInput: {fileID: 0}
+  usernameInput: {fileID: 848404071}
   portInput: {fileID: 0}
   ipInput: {fileID: 0}
   joinCode: {fileID: 0}
@@ -5204,7 +5204,7 @@ MonoBehaviour:
   _oJoin: {fileID: 0}
   spawnPosition: {x: 0, y: 15, z: 0}
   MaxPlayers: 4
-  _transport: {fileID: 0}
+  _transport: {fileID: 797885923}
 --- !u!1 &2014455909
 GameObject:
   m_ObjectHideFlags: 0

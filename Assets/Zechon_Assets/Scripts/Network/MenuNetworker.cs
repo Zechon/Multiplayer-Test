@@ -64,6 +64,9 @@ public class MenuNetworker : MonoBehaviour
 
         var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         playerObject.transform.position = spawnPosition;
+
+        string username = usernameInput.text;
+        SendUsernameToPlayer(username);
     }
 
     public void ClientClickedLAN(string ipInput, string portInput)
@@ -80,15 +83,14 @@ public class MenuNetworker : MonoBehaviour
             if (id == NetworkManager.Singleton.LocalClientId)
             {
                 var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                playerObject.transform.position = new Vector3(0, 20, 0);
+                playerObject.transform.position = new Vector3(0, 30, 0);
+                string username = usernameInput.text;
+                SendUsernameToPlayer(username);
             }
         };
     }
-    private void SendUsernameToPlayer()
+    private void SendUsernameToPlayer(string username)
     {
-        string username = usernameInput.text;
-        usernameInput.text = "";
-
         var player = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         if (player == null)
         {
@@ -222,7 +224,7 @@ public class MenuNetworker : MonoBehaviour
 
         NetworkManager.Singleton.StartHost();
 
-        SendUsernameToPlayer();
+        //SendUsernameToPlayer();
 
         SetLANButtons(false);
         SetOButtons(false);
@@ -247,7 +249,7 @@ public class MenuNetworker : MonoBehaviour
     {
         if (id == NetworkManager.Singleton.LocalClientId)
         {
-            SendUsernameToPlayer();
+            //SendUsernameToPlayer();
         }
     }
 }
