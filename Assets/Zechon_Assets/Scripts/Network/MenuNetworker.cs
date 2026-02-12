@@ -1,6 +1,5 @@
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 using Unity.Netcode.Transports.UTP;
 using System.Net;
@@ -8,7 +7,6 @@ using System.Net.Sockets;
 using System.Net.NetworkInformation;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
-using System.Net.Security;
 using Unity.Services.Relay;
 using System.Threading.Tasks;
 using Unity.Services.Relay.Models;
@@ -19,16 +17,10 @@ public class MenuNetworker : MonoBehaviour
     public UnityTransport ntwk;
 
     [Header("UI References (Assign in Inspector)")]
-    public TMP_Text statusLabel;
     public TMP_InputField usernameInput;
-    public TMP_InputField portInput;
-    public TMP_InputField ipInput;
 
     [Header("Online Stuff")]
     public TMP_Text joinCode;
-    public TMP_InputField _joinInput;
-    public Button _oHost;
-    public Button _oJoin;
 
     [Header("Spawn Info")]
     public Vector3 spawnPosition;
@@ -104,74 +96,6 @@ public class MenuNetworker : MonoBehaviour
             handler.RequestSetUsername(username);
         }
     }
-
-    void UpdateUI()
-    {
-        if (NetworkManager.Singleton == null)
-        {
-            SetStatusText("NetworkManager not found");
-            return;
-        }
-
-        if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsServer)
-        {
-            SetStatusText("Not connected");
-        }
-        else
-        {
-            UpdateStatusLabels();
-        }
-    }
-
-    private void SetLANButtons(bool state)
-    {
-        usernameInput.gameObject.SetActive(state);
-        portInput.gameObject.SetActive(state);
-        ipInput.gameObject.SetActive(state);
-    }
-
-    private void SetStatusText(string text)
-    {
-        //statusLabel.text = text;
-    }
-
-    private void UpdateStatusLabels()
-    {
-        var mode = NetworkManager.Singleton.IsHost
-            ? "Host"
-            : NetworkManager.Singleton.IsServer
-                ? "Server"
-                : "Client";
-
-        string modeText = "Mode: " + mode;
-
-        if (mode == "Host")
-        {
-            string hostIp = GetLocalIPAddress();
-            ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
-            SetStatusText($"{modeText} | {hostIp} | {port}");
-        }
-
-        else
-        {
-            string ip = string.IsNullOrEmpty(ipInput.text) ? "127.0.0.1" : ipInput.text;
-            ushort port = ushort.TryParse(portInput.text, out ushort parsedPort) ? parsedPort : (ushort)7777;
-            SetStatusText($"{modeText} | {ip} | {port}");
-        }
-        
-    }
-    private void Start()
-    {
-        //NetworkManager.Singleton.OnClientConnectedCallback += id =>
-        //{
-        //    Debug.Log($"Client connected: {id}");
-        //};
-        //NetworkManager.Singleton.OnClientDisconnectCallback += id =>
-        //{
-        //    Debug.Log($"Client disconnected: {id}");
-        //};
-    }
-
     public string GetLocalIPAddress()
     {
         foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
@@ -195,26 +119,6 @@ public class MenuNetworker : MonoBehaviour
         return "127.0.0.1";
     }
 
-    public void lanChosen()
-    {
-        SetLANButtons(true);
-        SetOButtons(false);
-    }
-
-    public void OnlineChosen()
-    {
-        SetLANButtons(false);
-        SetOButtons(true);
-    }
-
-    private void SetOButtons(bool state)
-    {
-        _oHost.gameObject.SetActive(state);
-        _oJoin.gameObject.SetActive(state);
-        usernameInput.gameObject.SetActive(state);
-        _joinInput.gameObject.SetActive(state);
-    }
-
     public async void HostGame()
     {
         Allocation a = await RelayService.Instance.CreateAllocationAsync(MaxPlayers);
@@ -224,15 +128,13 @@ public class MenuNetworker : MonoBehaviour
 
         NetworkManager.Singleton.StartHost();
 
-        //SendUsernameToPlayer();
-
-        SetLANButtons(false);
-        SetOButtons(false);
+        string username = usernameInput.text;
+        SendUsernameToPlayer(username);
     }
 
-    public async void JoinGame()
+    public async void JoinGame(string joinInput)
     {
-        JoinAllocation a = await RelayService.Instance.JoinAllocationAsync(_joinInput.text);
+        JoinAllocation a = await RelayService.Instance.JoinAllocationAsync(joinInput);
 
         _transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port,
             a.AllocationIdBytes, a.Key, a.ConnectionData, a.HostConnectionData);
@@ -240,16 +142,14 @@ public class MenuNetworker : MonoBehaviour
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
         NetworkManager.Singleton.StartClient();
-
-        SetLANButtons(false);
-        SetOButtons(false);
     }
 
     private void OnClientConnected(ulong id)
     {
         if (id == NetworkManager.Singleton.LocalClientId)
         {
-            //SendUsernameToPlayer();
+            string username = usernameInput.text;
+            SendUsernameToPlayer(username);
         }
     }
 }

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -7,12 +8,14 @@ public class MainMenuHandler : MonoBehaviour
     #region Variables
     [Header("Menu Pages")]
     [SerializeField] GameObject MainMenu;
+    [SerializeField] GameObject Online;
     [SerializeField] GameObject LAN;
     [SerializeField] GameObject Settings;
 
     [Header("Bools")]
     private bool settingsOpen = true;
     private bool lanOpen = true;
+    private bool onlineOpen = false;
     private bool host = false;
     private bool join = false;
 
@@ -24,9 +27,9 @@ public class MainMenuHandler : MonoBehaviour
     private PlayerInputHandler input;
     private MenuNetworker networker;
     private Animator mainAnim;
+    private Animator onlineAnim;
     private Animator lanAnim;
-    private GameObject MainButtons;
-    private GameObject LanButtons;
+    private Animator settingsAnim;
     #endregion
 
     #region Default Stuff
@@ -35,10 +38,16 @@ public class MainMenuHandler : MonoBehaviour
         SetupComponents();
 
         lanOpen = false;
+        LAN.SetActive(true);
         lanAnim.SetBool("Closed", true);
 
+        onlineOpen = false;
+        Online.SetActive(true);
+        onlineAnim.SetBool("Closed", true);
+
         settingsOpen = false;
-        Settings.SetActive(false);
+        Settings.SetActive(true);
+        settingsAnim.SetBool("Closed", true);
 
         MainMenu.SetActive(true);
         mainAnim.SetBool("Closed", false);
@@ -57,8 +66,9 @@ public class MainMenuHandler : MonoBehaviour
         if (networker == null) networker = GetComponent<MenuNetworker>();
 
         if (mainAnim == null) mainAnim = MainMenu.GetComponent<Animator>();
-        if(lanAnim == null) lanAnim = LAN.GetComponent<Animator>();
-        if (MainButtons == null) MainButtons = MainMenu.transform.GetChild(0).gameObject;
+        if (onlineAnim == null) onlineAnim = Online.GetComponent<Animator>();
+        if (lanAnim == null) lanAnim = LAN.GetComponent<Animator>();
+        if (settingsAnim == null) settingsAnim = Settings.GetComponent<Animator>();
     }
 
     public void CloseSubMenus()
@@ -70,8 +80,12 @@ public class MainMenuHandler : MonoBehaviour
 
         if (settingsOpen)
         {
-            settingsOpen = false;
-            Settings.SetActive(false);
+            StartCoroutine(CloseSettings());
+        }
+
+        if (onlineOpen)
+        {
+            StartCoroutine(CloseOnline());
         }
     }
     #endregion
@@ -89,6 +103,7 @@ public class MainMenuHandler : MonoBehaviour
         yield return new WaitForSeconds(1);
 
         lanAnim.SetBool("Closed", false);
+
         lanOpen = true;
     }
 
@@ -101,6 +116,8 @@ public class MainMenuHandler : MonoBehaviour
         mainAnim.SetBool("Closed", false);
         lanAnim.SetBool("OpenH", false);
         lanAnim.SetBool("OpenJ", false);
+
+        lanOpen = false;
     }
 
     public void LanHostPromptActivation()
@@ -114,8 +131,7 @@ public class MainMenuHandler : MonoBehaviour
         GameObject PopupHolder = LAN.transform.GetChild(1).gameObject;
         GameObject Popup = PopupHolder.transform.GetChild(0).gameObject;
         TMP_Text ipText = Popup.transform.GetChild(3).GetComponent<TMP_Text>();
-        //ipText.text = networker.GetLocalIPAddress();
-        ipText.text = "Your IP";
+        ipText.text = networker.GetLocalIPAddress();
 
         lanAnim.SetBool("OpenH", true);
         yield return new WaitForSeconds(0.5f);
@@ -185,17 +201,56 @@ public class MainMenuHandler : MonoBehaviour
     #region Online
     public void OpenOnlineMenu()
     {
-        //Coming soon
+        StartCoroutine(OpenOnline());
     }
+    private IEnumerator OpenOnline()
+    {
+        mainAnim.SetBool("Closed", true);
+
+        yield return new WaitForSeconds(1);
+
+        onlineAnim.SetBool("Closed", false);
+        onlineOpen = true;
+    }
+
+    private IEnumerator CloseOnline()
+    {
+        onlineAnim.SetBool("Closed", true);
+
+        yield return new WaitForSeconds(.25f);
+
+        mainAnim.SetBool("Closed", false);
+
+        onlineOpen = false;
+    }
+
     #endregion
 
     #region Settings + Quit
-    public void OpenSettings()
+    public void OpenSettingsMenu()
     {
-        settingsOpen = true;
-        Settings.SetActive(true);
+        StartCoroutine(OpenSettings());
+    }
+    
+    private IEnumerator OpenSettings()
+    {
+        mainAnim.SetBool("Closed", true);
 
-        MainMenu.SetActive(false);
+        yield return new WaitForSeconds(1);
+
+        settingsAnim.SetBool("Closed", false);
+        settingsOpen = true;
+    }
+
+    private IEnumerator CloseSettings()
+    {
+        settingsAnim.SetBool("Closed", true);
+
+        yield return new WaitForSeconds(.25f);
+
+        mainAnim.SetBool("Closed", false);
+
+        settingsOpen = false;
     }
 
     public void MainMenuQuit()
