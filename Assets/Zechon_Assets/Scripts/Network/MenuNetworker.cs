@@ -16,11 +16,13 @@ public class MenuNetworker : MonoBehaviour
     [Header("Network Manager")]
     public UnityTransport ntwk;
 
-    [Header("UI References (Assign in Inspector)")]
+    [Header("UI References")]
     public TMP_InputField usernameInput;
+    public TMP_InputField onlineUsernameInput;
 
     [Header("Online Stuff")]
-    public TMP_Text joinCode;
+    public string joinCode;
+    private string username;
 
     [Header("Spawn Info")]
     public Vector3 spawnPosition;
@@ -48,6 +50,8 @@ public class MenuNetworker : MonoBehaviour
 
         ntwk.SetConnectionData(hostIp, port);
 
+        username = usernameInput.text;
+
         NetworkManager.Singleton.StartHost();
 
         Debug.Log($"[Host] Hosting on {hostIp}:{port}");
@@ -57,7 +61,6 @@ public class MenuNetworker : MonoBehaviour
         var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         playerObject.transform.position = spawnPosition;
 
-        string username = usernameInput.text;
         SendUsernameToPlayer(username);
     }
 
@@ -68,6 +71,8 @@ public class MenuNetworker : MonoBehaviour
 
         ntwk.SetConnectionData(ip, port);
 
+        username = usernameInput.text;
+
         NetworkManager.Singleton.StartClient();
 
         NetworkManager.Singleton.OnClientConnectedCallback += id =>
@@ -76,7 +81,6 @@ public class MenuNetworker : MonoBehaviour
             {
                 var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
                 playerObject.transform.position = new Vector3(0, 30, 0);
-                string username = usernameInput.text;
                 SendUsernameToPlayer(username);
             }
         };
@@ -119,21 +123,30 @@ public class MenuNetworker : MonoBehaviour
         return "127.0.0.1";
     }
 
-    public async void HostGame()
+    public async void HostGame(int playerCountMax)
     {
+        username = usernameInput.text;
+
         Allocation a = await RelayService.Instance.CreateAllocationAsync(MaxPlayers);
-        joinCode.text = await RelayService.Instance.GetJoinCodeAsync(a.AllocationId);
+        joinCode = await RelayService.Instance.GetJoinCodeAsync(a.AllocationId);
+        Debug.Log(joinCode);
 
         _transport.SetHostRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port, a.AllocationIdBytes, a.Key, a.ConnectionData);
 
         NetworkManager.Singleton.StartHost();
 
-        string username = usernameInput.text;
+        NetworkManager.Singleton.SceneManager.LoadScene("MP_VOX_TEST", UnityEngine.SceneManagement.LoadSceneMode.Single);
+
+        var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+        playerObject.transform.position = spawnPosition;
+
         SendUsernameToPlayer(username);
     }
 
     public async void JoinGame(string joinInput)
     {
+        username = usernameInput.text;
+
         JoinAllocation a = await RelayService.Instance.JoinAllocationAsync(joinInput);
 
         _transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port,
@@ -148,7 +161,8 @@ public class MenuNetworker : MonoBehaviour
     {
         if (id == NetworkManager.Singleton.LocalClientId)
         {
-            string username = usernameInput.text;
+            var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+            playerObject.transform.position = new Vector3(0, 30, 0);
             SendUsernameToPlayer(username);
         }
     }
