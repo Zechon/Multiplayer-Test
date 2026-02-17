@@ -217,8 +217,10 @@ public class MainMenuHandler : MonoBehaviour
     private IEnumerator CloseOnline()
     {
         onlineAnim.SetBool("Closed", true);
+        onlineAnim.SetBool("OpenH", false);
+        onlineAnim.SetBool("OpenJ", false);
 
-        yield return new WaitForSeconds(.25f);
+        yield return new WaitForSeconds(1);
 
         mainAnim.SetBool("Closed", false);
 

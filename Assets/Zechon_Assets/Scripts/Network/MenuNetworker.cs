@@ -50,7 +50,7 @@ public class MenuNetworker : MonoBehaviour
 
         ntwk.SetConnectionData(hostIp, port);
 
-        username = usernameInput.text;
+        MenuNetworkerCachedUsername.Value = usernameInput.text.ToString();
 
         NetworkManager.Singleton.StartHost();
 
@@ -61,7 +61,6 @@ public class MenuNetworker : MonoBehaviour
         var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         playerObject.transform.position = spawnPosition;
 
-        SendUsernameToPlayer(username);
     }
 
     public void ClientClickedLAN(string ipInput, string portInput)
@@ -71,7 +70,7 @@ public class MenuNetworker : MonoBehaviour
 
         ntwk.SetConnectionData(ip, port);
 
-        username = usernameInput.text;
+        MenuNetworkerCachedUsername.Value = usernameInput.text.ToString();
 
         NetworkManager.Singleton.StartClient();
 
@@ -81,25 +80,10 @@ public class MenuNetworker : MonoBehaviour
             {
                 var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
                 playerObject.transform.position = new Vector3(0, 30, 0);
-                SendUsernameToPlayer(username);
             }
         };
     }
-    private void SendUsernameToPlayer(string username)
-    {
-        var player = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-        if (player == null)
-        {
-            Debug.LogWarning("Local player object still not spawned.");
-            return;
-        }
 
-        var handler = player.GetComponent<UsernameHandler>();
-        if (handler != null)
-        {
-            handler.RequestSetUsername(username);
-        }
-    }
     public string GetLocalIPAddress()
     {
         foreach (NetworkInterface ni in NetworkInterface.GetAllNetworkInterfaces())
@@ -125,7 +109,7 @@ public class MenuNetworker : MonoBehaviour
 
     public async void HostGame(int playerCountMax)
     {
-        username = usernameInput.text;
+        MenuNetworkerCachedUsername.Value = onlineUsernameInput.text.ToString();
 
         Allocation a = await RelayService.Instance.CreateAllocationAsync(MaxPlayers);
         joinCode = await RelayService.Instance.GetJoinCodeAsync(a.AllocationId);
@@ -139,13 +123,11 @@ public class MenuNetworker : MonoBehaviour
 
         var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         playerObject.transform.position = spawnPosition;
-
-        SendUsernameToPlayer(username);
     }
 
     public async void JoinGame(string joinInput)
     {
-        username = usernameInput.text;
+        MenuNetworkerCachedUsername.Value = onlineUsernameInput.text.ToString();
 
         JoinAllocation a = await RelayService.Instance.JoinAllocationAsync(joinInput);
 
@@ -163,7 +145,6 @@ public class MenuNetworker : MonoBehaviour
         {
             var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
             playerObject.transform.position = new Vector3(0, 30, 0);
-            SendUsernameToPlayer(username);
         }
     }
 }

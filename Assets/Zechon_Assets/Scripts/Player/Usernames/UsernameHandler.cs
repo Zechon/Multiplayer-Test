@@ -8,32 +8,53 @@ public class UsernameHandler : NetworkBehaviour
     [Header("UI Reference")]
     public TMP_Text usernameText;
 
-    private NetworkVariable<FixedString128Bytes> NetworkUsername
-        = new NetworkVariable<FixedString128Bytes>(
-            writePerm: NetworkVariableWritePermission.Server,
-            readPerm: NetworkVariableReadPermission.Everyone
-        );
+    public NetworkVariable<FixedString64Bytes> Username =
+        new(writePerm: NetworkVariableWritePermission.Server);
 
-    public void RequestSetUsername(string username)
+    public override void OnNetworkSpawn()
+    {
+        // Listen for changes
+        Username.OnValueChanged += OnUsernameChanged;
+
+        // Update immediately (important for host & late join)
+        UpdateUsernameText(Username.Value);
+
+        if (IsOwner)
+        {
+            string pendingName = MenuNetworkerCachedUsername.Value;
+            if (!string.IsNullOrEmpty(pendingName))
+            {
+                RequestSetUsername(pendingName);
+            }
+        }
+    }
+
+    private void OnUsernameChanged(FixedString64Bytes oldValue, FixedString64Bytes newValue)
+    {
+        UpdateUsernameText(newValue);
+    }
+
+    private void UpdateUsernameText(FixedString64Bytes value)
+    {
+        if (usernameText != null)
+            usernameText.text = value.ToString();
+    }
+
+    public void RequestSetUsername(string name)
     {
         if (IsOwner)
-            SubmitUsernameServerRpc(username);
+            SetUsernameServerRpc(name);
     }
 
     [ServerRpc]
-    private void SubmitUsernameServerRpc(string username, ServerRpcParams rpc = default)
+    private void SetUsernameServerRpc(string name)
     {
-        NetworkUsername.Value = username;
+        Debug.Log("Server received username: " + name);
+        Username.Value = new FixedString64Bytes(name);
     }
+}
 
-    private void Start()
-    {
-        NetworkUsername.OnValueChanged += (oldValue, newValue) =>
-        {
-            if (usernameText != null)
-                usernameText.text = newValue.ToString();
-        };
-
-        usernameText.text = NetworkUsername.Value.ToString();
-    }
+public static class MenuNetworkerCachedUsername
+{
+    public static string Value;
 }
