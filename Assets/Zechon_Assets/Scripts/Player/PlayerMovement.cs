@@ -45,6 +45,8 @@ public class PlayerMovement : NetworkBehaviour
     private Vector3 velocity;
 
     public MovementState state { get; private set; }
+    public bool IsPaused { get; set; }
+
     private float currentSpeed;
 
     private bool grounded;
@@ -64,7 +66,7 @@ public class PlayerMovement : NetworkBehaviour
     private void Update()
     {
         if (!IsOwner) return;
-        if (pauseHandler != null && pauseHandler.paused) return;
+        if (IsPaused) return;
 
         //Ground Check
         grounded = IsGrounded(out groundHit);

@@ -9,6 +9,7 @@ public class PauseMenuHandler : MonoBehaviour
     [SerializeField] private Canvas pauseCanvas;
     [SerializeField] private PlayerInputHandler input;
     [SerializeField] private Volume volume;
+    [SerializeField] private PlayerMovement localPlayer;
 
     [Header("Menu Pages")]
     [SerializeField] GameObject Default;
@@ -28,6 +29,17 @@ public class PauseMenuHandler : MonoBehaviour
         if (input == null) { input = GameObject.FindGameObjectWithTag("Input").GetComponent<PlayerInputHandler>(); }
         if (volume == null) { volume = GameObject.FindGameObjectWithTag("Volume").GetComponent<Volume>(); }
         if (depth == null) { volume.profile.TryGet<DepthOfField>(out depth); }
+        if (localPlayer == null)
+        {
+            foreach (PlayerMovement player in FindObjectsByType<PlayerMovement>(FindObjectsSortMode.None))
+            {
+                if (player.IsOwner)
+                {
+                    localPlayer = player;
+                    break;
+                }
+            }
+        }
 
         pauseCanvas.enabled = false;
         paused = false;
@@ -49,6 +61,10 @@ public class PauseMenuHandler : MonoBehaviour
                 pauseCanvas.enabled = true;
                 Blur(true);
                 CursorLocker.Unlock();
+
+                if (localPlayer != null)
+                    localPlayer.IsPaused = true;
+
                 paused = true;
                 break;
 
@@ -56,10 +72,15 @@ public class PauseMenuHandler : MonoBehaviour
                 pauseCanvas.enabled = false;
                 Blur(false);
                 CursorLocker.Lock();
+
+                if (localPlayer != null)
+                    localPlayer.IsPaused = false;
+
                 paused = false;
                 break;
         }
     }
+
 
     private void Blur(bool state)
     {
