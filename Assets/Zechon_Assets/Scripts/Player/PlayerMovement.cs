@@ -78,7 +78,6 @@ public class PlayerMovement : NetworkBehaviour
         HandleCrouch();
         oobTeleport();
 
-        DebugMyStuff();
     }
 
     private void HandleMovement()
@@ -195,12 +194,6 @@ public class PlayerMovement : NetworkBehaviour
         return !Physics.CheckSphere(checkPosition, ceilingCheckRadius, ceilingMask, QueryTriggerInteraction.Ignore);
     }
 
-
-    private void DebugMyStuff()
-    {
-        //Debug.Log(state.ToString());
-    }
-
     //DEBUGGIN VISUALS :3
     private void OnDrawGizmosSelected()
     {
@@ -226,6 +219,5 @@ public class PlayerMovement : NetworkBehaviour
             GetComponentInChildren<Camera>(true).gameObject.SetActive(true);
         }
     }
-
     #endregion
 }
