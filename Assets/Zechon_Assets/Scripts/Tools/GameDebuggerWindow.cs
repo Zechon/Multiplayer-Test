@@ -5,27 +5,47 @@ using UnityEngine;
 public class GameDebuggerWindow : EditorWindow
 {
     private Vector2 scroll;
-    private Dictionary<string, bool> foldoutStates
-        = new Dictionary<string, bool>();
+    private List<DebugSection> snapshot = new List<DebugSection>();
+    private Dictionary<string, bool> foldouts = new Dictionary<string, bool>();
+
+    private double nextRefreshTime;
+    private const double refreshRate = 0.25; // 4 times per second
 
     [MenuItem("Tools/Game Debugger")]
     public static void ShowWindow()
     {
-        GetWindow<GameDebuggerWindow>("System Debugger");
+        GetWindow<GameDebuggerWindow>("Game System Debugger");
+    }
+
+    private void OnEnable()
+    {
+        nextRefreshTime = EditorApplication.timeSinceStartup;
+    }
+
+    private void Update()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        if (EditorApplication.timeSinceStartup < nextRefreshTime)
+            return;
+
+        nextRefreshTime = EditorApplication.timeSinceStartup + refreshRate;
+
+        snapshot = GameDebugRegistry.BuildSnapshot();
+        Repaint();
     }
 
     private void OnGUI()
     {
-        if (GUILayout.Button("Force Refresh"))
+        if (GUILayout.Button("Refresh"))
         {
-            Repaint();
+            snapshot = GameDebugRegistry.BuildSnapshot();
         }
 
         scroll = EditorGUILayout.BeginScrollView(scroll);
 
-        List<DebugSection> sections = GameDebugRegistry.GetSections();
-
-        foreach (var section in sections)
+        foreach (var section in snapshot)
         {
             DrawSection(section, 0);
         }
@@ -33,33 +53,24 @@ public class GameDebuggerWindow : EditorWindow
         EditorGUILayout.EndScrollView();
     }
 
-    private void Update()
-    {
-        // Live updating while playing
-        if (Application.isPlaying)
-            Repaint();
-    }
-
     private void DrawSection(DebugSection section, int indent)
     {
         EditorGUI.indentLevel = indent;
 
-        if (!foldoutStates.ContainsKey(section.Title))
-            foldoutStates[section.Title] = true;
+        if (!foldouts.ContainsKey(section.Id))
+            foldouts[section.Id] = true;
 
-        foldoutStates[section.Title] = EditorGUILayout.Foldout(
-            foldoutStates[section.Title],
-            section.Title,
-            true);
+        foldouts[section.Id] =
+            EditorGUILayout.Foldout(foldouts[section.Id], section.Title, true);
 
-        if (foldoutStates[section.Title])
+        if (foldouts[section.Id])
         {
-            if (section.ContentProvider != null)
+            if (!string.IsNullOrEmpty(section.Content))
             {
-                EditorGUILayout.LabelField(
-                    section.ContentProvider.Invoke(),
-                    EditorStyles.helpBox);
+                EditorGUILayout.LabelField(section.Content, EditorStyles.helpBox);
             }
+
+            section.Children.Sort((a, b) => a.Order.CompareTo(b.Order));
 
             foreach (var child in section.Children)
             {

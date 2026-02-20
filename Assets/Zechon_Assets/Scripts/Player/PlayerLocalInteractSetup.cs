@@ -2,7 +2,7 @@ using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class PlayerLocalInteractionsSetup : NetworkBehaviour
+public class PlayerLocalInteractionsSetup : MonoBehaviour
 {
     [Header("Enable Interactions")]
     [SerializeField] private bool pauseMenuInteract;
@@ -11,12 +11,13 @@ public class PlayerLocalInteractionsSetup : NetworkBehaviour
     //Debug Log Output String
     private string debugString = "";
 
-    public override void OnNetworkSpawn()
+    public void OnAwake()
     {
         if (pauseMenuInteract)
         {
             debugString += "Pause Menu:\n";
-            GameObject pauseObject = GameObject.FindGameObjectWithTag("Pause");
+            GameObject pauseObject = GameObject.Find("PauseMenuHandler");
+            if (pauseObject == null) pauseObject = GameObject.FindGameObjectWithTag("Pause");
             if (pauseObject == null) debugString += "\n\tPause Menu Object: NULL";
             else debugString += $"\n\tPause Menu Object: {pauseObject.name}";
 
@@ -37,23 +38,11 @@ public class PlayerLocalInteractionsSetup : NetworkBehaviour
             debugString += "\tPause Menu: Inactive";
         }
 
-        GameDebugRegistry.Register(BuildSection);
+        //GameDebugRegistry.Register(BuildSection);
     }
 
     private void OnDisable()
     {
-        GameDebugRegistry.Unregister(BuildSection);
-    }
-
-    private DebugSection BuildSection()
-    {
-        DebugSection section = new DebugSection(
-            "Local Interactions Setup",
-            () =>
-            {
-                return debugString;
-            });
-
-        return section;
+        //GameDebugRegistry.Unregister(BuildSection);
     }
 }

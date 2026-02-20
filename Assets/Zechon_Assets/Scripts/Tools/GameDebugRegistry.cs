@@ -4,27 +4,36 @@ using System.Text;
 
 public class GameDebugRegistry
 {
-    private static List<Func<DebugSection>> providers
-           = new List<Func<DebugSection>>();
+    private static Dictionary<string, Func<DebugSection>> providers
+            = new Dictionary<string, Func<DebugSection>>();
 
-    public static void Register(Func<DebugSection> provider)
+    public static void Register(string key, Func<DebugSection> provider)
     {
-        providers.Add(provider);
+        providers[key] = provider;
     }
 
-    public static void Unregister(Func<DebugSection> provider)
+    public static void Unregister(string key)
     {
-        providers.Remove(provider);
+        providers.Remove(key);
     }
 
-    public static List<DebugSection> GetSections()
+    public static List<DebugSection> BuildSnapshot()
     {
         List<DebugSection> sections = new List<DebugSection>();
 
-        foreach (var provider in providers)
+        foreach (var pair in providers)
         {
-            sections.Add(provider.Invoke());
+            try
+            {
+                sections.Add(pair.Value.Invoke());
+            }
+            catch (Exception e)
+            {
+                sections.Add(new DebugSection(pair.Key + "_error", pair.Key + " Error", e.Message));
+            }
         }
+
+        sections.Sort((a, b) => a.Order.CompareTo(b.Order));
 
         return sections;
     }
@@ -32,13 +41,17 @@ public class GameDebugRegistry
 
 public class DebugSection
 {
+    public string Id;
     public string Title;
-    public Func<string> ContentProvider;  // evaluated every draw
+    public string Content;
+    public int Order;
     public List<DebugSection> Children = new List<DebugSection>();
 
-    public DebugSection(string title, Func<string> provider = null)
+    public DebugSection(string id, string title, string content = "", int order = 0)
     {
+        Id = id;
         Title = title;
-        ContentProvider = provider;
+        Content = content;
+        Order = order;
     }
 }

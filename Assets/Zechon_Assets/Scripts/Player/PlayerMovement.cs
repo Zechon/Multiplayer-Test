@@ -49,11 +49,13 @@ public class PlayerMovement : NetworkBehaviour
 
     private float currentSpeed;
 
-    private bool grounded;
+    public bool grounded { get; private set; }
     private RaycastHit groundHit;
 
     private float originalHeight;
     private Vector3 originalCenter;
+
+    public string debugString = "";
     #endregion
 
     private void Awake()
@@ -61,6 +63,7 @@ public class PlayerMovement : NetworkBehaviour
         originalHeight = controller.height;
         originalCenter = controller.center;
         //pauseHandler = GameObject.FindGameObjectWithTag("Pause").GetComponent<PauseMenuHandler>();
+        if (pauseHandler != null) { debugString += "Connection succesfull"; }
     }
 
     private void Update()
