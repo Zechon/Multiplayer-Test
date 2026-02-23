@@ -9,12 +9,17 @@ public class PlayerDebugger : NetworkBehaviour
     [SerializeField] private CharacterController charController;
     [SerializeField] private PlayerMovement plyrMovement;
     [SerializeField] private GameObject cameraPivot;
+    [SerializeField] private GameObject orientation;
 
     private string debugKey;
+
+    private Vector2 prevPos;
 
     public override void OnNetworkSpawn()
     {
         debugKey = "Player_" + NetworkObjectId;
+
+        prevPos = new Vector2(transform.position.x, transform.position.z);
 
         GameDebugRegistry.Register(debugKey, BuildSection);
     }
@@ -37,7 +42,8 @@ public class PlayerDebugger : NetworkBehaviour
         root.Children.Add(new DebugSection(
             debugKey + "_movement",
             "Movement",
-            $"Velocity: {charController.velocity}\n" + 
+            $"Horizontal Velocity: {CalcVelocity()}\n" +
+            $"Vertical Velocity: {charController.velocity.y.ToString("+0.00;-0.00")}\n" +
             $"State: {plyrMovement.state}\n" +
             $"Grounded?: {plyrMovement.grounded}",
             0
@@ -47,10 +53,21 @@ public class PlayerDebugger : NetworkBehaviour
             debugKey + "_position",
             "Transform",
             $"Position: {transform.position}\n" +
-            $"Camera Rotation: {cameraPivot.transform.localRotation}",
+            $"Camera Rotation: X {cameraPivot.transform.eulerAngles.x.ToString("+0.00;-0.00")}, Y {orientation.transform.eulerAngles.y.ToString("+0.00;-0.00")}",
             1
         ));
 
         return root;
+    }
+
+    private string CalcVelocity()
+    {
+        float distanceTraveled = Vector2.Distance(new Vector2(transform.position.x, transform.position.z), prevPos);
+
+        string result = (distanceTraveled / Time.deltaTime).ToString("+0.00;-0.00");
+
+        prevPos = new Vector2(transform.position.x, transform.transform.position.z);
+
+        return result;
     }
 }

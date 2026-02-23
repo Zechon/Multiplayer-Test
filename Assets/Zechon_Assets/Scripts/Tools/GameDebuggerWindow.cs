@@ -9,7 +9,7 @@ public class GameDebuggerWindow : EditorWindow
     private Dictionary<string, bool> foldouts = new Dictionary<string, bool>();
 
     private double nextRefreshTime;
-    private const double refreshRate = 0.25; // 4 times per second
+    private const double refreshRate = 0.25;
 
     [MenuItem("Tools/Game Debugger")]
     public static void ShowWindow()

@@ -29,6 +29,7 @@ public class MenuNetworker : MonoBehaviour
     public int MaxPlayers = 4;
 
     [SerializeField] private UnityTransport _transport;
+    private string debugKey;
 
     private async void Awake()
     {
@@ -60,7 +61,6 @@ public class MenuNetworker : MonoBehaviour
 
         var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         playerObject.transform.position = spawnPosition;
-
     }
 
     public void ClientClickedLAN(string ipInput, string portInput)
@@ -123,6 +123,8 @@ public class MenuNetworker : MonoBehaviour
 
         var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
         playerObject.transform.position = spawnPosition;
+
+        GameDebugStuff();
     }
 
     public async void JoinGame(string joinInput)
@@ -146,5 +148,31 @@ public class MenuNetworker : MonoBehaviour
             var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
             playerObject.transform.position = new Vector3(0, 30, 0);
         }
+    }
+
+    private void GameDebugStuff()
+    {
+        debugKey = "Host" + AuthenticationService.Instance.PlayerId;
+
+        GameDebugRegistry.Register(debugKey, BuildSection);
+    }
+
+    private DebugSection BuildSection()
+    {
+        DebugSection root = new DebugSection(
+            debugKey,
+            $"Host Client: {onlineUsernameInput.text.ToString()} ({AuthenticationService.Instance.PlayerId})",
+            "",
+            0
+        );
+
+        root.Children.Add(new DebugSection(
+            debugKey + "_details",
+            "Details",
+            $"Join Code: {joinCode}",
+            0
+        ));
+
+        return root;
     }
 }
