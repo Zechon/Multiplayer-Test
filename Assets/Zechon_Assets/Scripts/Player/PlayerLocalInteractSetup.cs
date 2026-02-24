@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -6,43 +7,81 @@ public class PlayerLocalInteractionsSetup : MonoBehaviour
 {
     [Header("Enable Interactions")]
     [SerializeField] private bool pauseMenuInteract;
+
+    public float pause_Stopwatch = 0f;
+    private bool pause_NullOrNot = true;
+    private bool pause_SetupRun = false;
+
+    [Header("Objects / Refs")]
+    [SerializeField] private PlayerCamera plyrCamRef;
+    private GameObject pauseObject;
     private PauseMenuHandler pauseMenuHandler;
 
     //Debug Log Output String
-    private string debugString = "";
+    [HideInInspector]public string debugString = "";
 
-    public void OnAwake()
+    private IEnumerator PauseMenuSetup()
     {
-        if (pauseMenuInteract)
-        {
-            debugString += "Pause Menu:\n";
-            GameObject pauseObject = GameObject.Find("PauseMenuHandler");
-            if (pauseObject == null) pauseObject = GameObject.FindGameObjectWithTag("Pause");
-            if (pauseObject == null) debugString += "\n\tPause Menu Object: NULL";
-            else debugString += $"\n\tPause Menu Object: {pauseObject.name}";
+        pause_SetupRun = true;
 
-            if (pauseObject != null)
-            {
-                pauseMenuHandler.Setup();
-                pauseMenuHandler = pauseObject.GetComponent<PauseMenuHandler>();
-                if (pauseMenuHandler.setup == true) debugString += "\t|\tPause Menu: Active";
-                return;
-            }
-            
-            debugString += "\t|\tPause Menu: Setup Failed";
+        debugString += "Pause Menu Object: ";
+
+        if (pauseObject == null) debugString += "NULL / Not Found";
+
+        else debugString += $"{pauseObject.name}";
+
+        debugString += "\n\tPause Menu: ";
+        
+
+       pauseMenuHandler = pauseObject.GetComponent<PauseMenuHandler>();
+
+       pauseMenuHandler.Setup();
+
+        if (pauseMenuHandler.setup == true)
+        {
+            debugString += "Active";
+
+            plyrCamRef.PauseHSetup(pauseMenuHandler);
+            transform.GetComponent<PlayerDebugger>().pauseHSetup(pauseMenuHandler);
+            yield break;
         }
 
         else
         {
-            pauseMenuHandler = null;
-            debugString += "\tPause Menu: Inactive";
+            debugString += "Setup Failed";
+            yield break;
         }
-
-        //GameDebugRegistry.Register(BuildSection);
     }
 
-    private void OnDisable()
+    private void Update()
     {
-        //GameDebugRegistry.Unregister(BuildSection);
+        if (pauseMenuInteract)
+        {
+            if (pause_NullOrNot == true && pause_SetupRun == false)
+            {
+                pauseObject = GameObject.FindGameObjectWithTag("Pause");
+                if (pauseObject == null)
+                {
+                    pause_Stopwatch += Time.deltaTime;
+                }
+
+                else
+                {
+                    pause_NullOrNot = false;
+                }
+            }
+
+            if (pause_SetupRun == false && pause_NullOrNot == false)
+            {
+                StartCoroutine(PauseMenuSetup());
+            }
+        }
+
+        else if (!pauseMenuInteract && pause_SetupRun == false)
+        {
+            pauseMenuHandler = null;
+            debugString += "Pause Menu Setup: Not Enabled";
+            pause_SetupRun = true;
+        }
     }
 }

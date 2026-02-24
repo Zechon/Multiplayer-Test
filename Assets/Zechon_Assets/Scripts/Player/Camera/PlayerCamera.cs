@@ -21,8 +21,6 @@ public class PlayerCamera : MonoBehaviour
 
     void Start()
     {
-        //pauseHandler = GameObject.FindGameObjectWithTag("Pause").GetComponent<PauseMenuHandler>();
-
         if (!GetComponentInParent<NetworkObject>().IsOwner)
         {
             playerCam.enabled = false;
@@ -30,7 +28,12 @@ public class PlayerCamera : MonoBehaviour
         }
         else
             CursorLocker.Lock();
-}
+    }
+
+    public void PauseHSetup(PauseMenuHandler pmh)
+    {
+        pauseHandler = pmh;
+    }
 
     private void LateUpdate()
     {

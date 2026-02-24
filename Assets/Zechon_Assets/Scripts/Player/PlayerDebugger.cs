@@ -10,6 +10,8 @@ public class PlayerDebugger : NetworkBehaviour
     [SerializeField] private PlayerMovement plyrMovement;
     [SerializeField] private GameObject cameraPivot;
     [SerializeField] private GameObject orientation;
+    [SerializeField] private PlayerLocalInteractionsSetup plyrLocalInteract;
+    private PauseMenuHandler pause;
 
     private string debugKey;
 
@@ -44,7 +46,7 @@ public class PlayerDebugger : NetworkBehaviour
             "Movement",
             $"Horizontal Velocity: {CalcVelocity()}\n" +
             $"Vertical Velocity: {charController.velocity.y.ToString("+0.00;-0.00")}\n" +
-            $"State: {plyrMovement.state}\n" +
+            $"Movement State: {plyrMovement.state}\n" +
             $"Grounded?: {plyrMovement.grounded}",
             0
         ));
@@ -54,6 +56,23 @@ public class PlayerDebugger : NetworkBehaviour
             "Transform",
             $"Position: {transform.position}\n" +
             $"Camera Rotation: X {cameraPivot.transform.eulerAngles.x.ToString("+0.00;-0.00")}, Y {orientation.transform.eulerAngles.y.ToString("+0.00;-0.00")}",
+            1
+        ));
+
+        root.Children.Add(new DebugSection(
+            debugKey + "_components",
+            "Components",
+            $"Pause Menu\n" +
+            $"\t{plyrLocalInteract.debugString}\n" +
+            $"\tPause Menu Init Time: {plyrLocalInteract.pause_Stopwatch.ToString("+0.00;-0.00")}",
+            1
+        ));
+
+        root.Children.Add(new DebugSection(
+            debugKey + "_gameInfo",
+            "Game Info",
+            $"" +
+            $"",
             1
         ));
 
@@ -69,5 +88,10 @@ public class PlayerDebugger : NetworkBehaviour
         prevPos = new Vector2(transform.position.x, transform.transform.position.z);
 
         return result;
+    }
+
+    public void pauseHSetup(PauseMenuHandler pmh)
+    {
+        pause = pmh;
     }
 }

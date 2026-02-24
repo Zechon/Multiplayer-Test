@@ -8,6 +8,8 @@ TagManager:
   - nametag
   - PlayerCamera
   - Popups
+  - Pause
+  - Input
   layers:
   - Default
   - TransparentFX
