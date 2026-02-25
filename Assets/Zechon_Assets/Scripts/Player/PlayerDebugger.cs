@@ -47,7 +47,7 @@ public class PlayerDebugger : NetworkBehaviour
             $"Horizontal Velocity: {CalcVelocity()}\n" +
             $"Vertical Velocity: {charController.velocity.y.ToString("+0.00;-0.00")}\n" +
             $"Movement State: {plyrMovement.state}\n" +
-            $"Grounded?: {plyrMovement.grounded}",
+            $"Grounded: {plyrMovement.grounded}",
             0
         ));
 
@@ -71,7 +71,7 @@ public class PlayerDebugger : NetworkBehaviour
         root.Children.Add(new DebugSection(
             debugKey + "_gameInfo",
             "Game Info",
-            $"" +
+            $"Paused: {pause.paused}" +
             $"",
             1
         ));

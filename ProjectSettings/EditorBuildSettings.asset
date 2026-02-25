@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Zechon_Assets/Scenes/Bootstrap.unity
+    guid: 923ebd35c2f53b644a025d72d971f1af
+  - enabled: 1
     path: Assets/Zechon_Assets/Scenes/Main_Menu.unity
     guid: 35a8c6c83ad5ff249870d92e150b716c
   - enabled: 1

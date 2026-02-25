@@ -30,18 +30,11 @@ public class MenuNetworker : MonoBehaviour
 
     [SerializeField] private UnityTransport _transport;
     private string debugKey;
+    private string _cachedLocalIP;
 
-    private async void Awake()
+    private void Start()
     {
-        await Authenticate();
-    }
-
-    private static async Task Authenticate()
-    {
-        await UnityServices.InitializeAsync();
-        await AuthenticationService.Instance.SignInAnonymouslyAsync();
-
-        Debug.Log("[Unity Services] Authenticated as: " + AuthenticationService.Instance.PlayerId);
+        DontDestroyOnLoad(gameObject);
     }
 
     public void HostClickedLAN(string portInput)
@@ -136,6 +129,7 @@ public class MenuNetworker : MonoBehaviour
         _transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port,
             a.AllocationIdBytes, a.Key, a.ConnectionData, a.HostConnectionData);
 
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
 
         NetworkManager.Singleton.StartClient();

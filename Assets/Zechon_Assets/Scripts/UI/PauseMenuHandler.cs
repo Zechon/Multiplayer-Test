@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -26,9 +27,13 @@ public class PauseMenuHandler : MonoBehaviour
     private bool settingsOpen;
     public bool setup { get; private set; }
 
-public void Setup()
+    private void Start()
     {
         setup = false;
+    }
+
+    public void Setup()
+    {
         if (input == null) { input = GameObject.FindGameObjectWithTag("Input").GetComponent<PlayerInputHandler>(); }
         if (volume == null) { volume = GameObject.FindGameObjectWithTag("Volume").GetComponent<Volume>(); }
         if (depth == null) { volume.profile.TryGet<DepthOfField>(out depth); }
@@ -128,6 +133,11 @@ public void Setup()
 
     public void PauseToMainMenu()
     {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
         SceneManager.LoadScene(mainMenuName);
     }
 }
