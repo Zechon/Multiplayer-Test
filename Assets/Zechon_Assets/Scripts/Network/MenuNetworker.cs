@@ -26,8 +26,8 @@ public class MenuNetworker : MonoBehaviour
 
     [Header("Debug Stuff")]
     private string networkMode = "";
-    private string joinIP = "";
-    private string joinPort = "";
+    public string joinIP = "";
+    public string joinPort = "";
 
     [Header("Spawn Info")]
     public Vector3 spawnPosition;

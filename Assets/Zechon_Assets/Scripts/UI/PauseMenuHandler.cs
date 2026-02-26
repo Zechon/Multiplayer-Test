@@ -12,6 +12,7 @@ public class PauseMenuHandler : MonoBehaviour
     [SerializeField] private PlayerInputHandler input;
     [SerializeField] private Volume volume;
     [SerializeField] private PlayerMovement localPlayer;
+    private MenuNetworker ntwk;
 
     [Header("Menu Pages")]
     [SerializeField] GameObject Default;

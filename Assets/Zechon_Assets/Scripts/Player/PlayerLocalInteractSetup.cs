@@ -14,6 +14,7 @@ public class PlayerLocalInteractionsSetup : MonoBehaviour
 
     [Header("Objects / Refs")]
     [SerializeField] private PlayerCamera plyrCamRef;
+    [SerializeField] private MenuNetworker ntwk;
     private GameObject pauseObject;
     private PauseMenuHandler pauseMenuHandler;
 
