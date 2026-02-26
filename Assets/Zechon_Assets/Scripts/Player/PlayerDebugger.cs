@@ -42,13 +42,21 @@ public class PlayerDebugger : NetworkBehaviour
         );
 
         root.Children.Add(new DebugSection(
+            debugKey + "_gameInfo",
+            "Game Info",
+            $"Paused: {pause.paused}" +
+            $"",
+            0
+        ));
+
+        root.Children.Add(new DebugSection(
             debugKey + "_movement",
             "Movement",
             $"Horizontal Velocity: {CalcVelocity()}\n" +
             $"Vertical Velocity: {charController.velocity.y.ToString("+0.00;-0.00")}\n" +
             $"Movement State: {plyrMovement.state}\n" +
             $"Grounded: {plyrMovement.grounded}",
-            0
+            1
         ));
 
         root.Children.Add(new DebugSection(
@@ -56,7 +64,7 @@ public class PlayerDebugger : NetworkBehaviour
             "Transform",
             $"Position: {transform.position}\n" +
             $"Camera Rotation: X {cameraPivot.transform.eulerAngles.x.ToString("+0.00;-0.00")}, Y {orientation.transform.eulerAngles.y.ToString("+0.00;-0.00")}",
-            1
+            2
         ));
 
         root.Children.Add(new DebugSection(
@@ -65,15 +73,7 @@ public class PlayerDebugger : NetworkBehaviour
             $"Pause Menu\n" +
             $"\t{plyrLocalInteract.debugString}\n" +
             $"\tPause Menu Init Time: {plyrLocalInteract.pause_Stopwatch.ToString("+0.00;-0.00")}",
-            1
-        ));
-
-        root.Children.Add(new DebugSection(
-            debugKey + "_gameInfo",
-            "Game Info",
-            $"Paused: {pause.paused}" +
-            $"",
-            1
+            3
         ));
 
         return root;

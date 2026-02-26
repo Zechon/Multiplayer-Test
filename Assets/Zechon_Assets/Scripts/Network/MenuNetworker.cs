@@ -14,7 +14,7 @@ using Unity.Services.Relay.Models;
 public class MenuNetworker : MonoBehaviour
 {
     [Header("Network Manager")]
-    public UnityTransport ntwk;
+    UnityTransport transport;
 
     [Header("UI References")]
     public TMP_InputField usernameInput;
@@ -24,17 +24,21 @@ public class MenuNetworker : MonoBehaviour
     public string joinCode;
     private string username;
 
+    [Header("Debug Stuff")]
+    private string networkMode = "";
+    private string joinIP = "";
+    private string joinPort = "";
+
     [Header("Spawn Info")]
     public Vector3 spawnPosition;
     public int MaxPlayers = 4;
 
-    [SerializeField] private UnityTransport _transport;
     private string debugKey;
     private string _cachedLocalIP;
 
     private void Start()
     {
-        DontDestroyOnLoad(gameObject);
+        transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
     }
 
     public void HostClickedLAN(string portInput)
@@ -42,18 +46,30 @@ public class MenuNetworker : MonoBehaviour
         string hostIp = GetLocalIPAddress();
         ushort port = ushort.TryParse(portInput, out ushort parsedPort) ? parsedPort : (ushort)7777;
 
-        ntwk.SetConnectionData(hostIp, port);
+        transport.SetConnectionData(hostIp, port);
 
         MenuNetworkerCachedUsername.Value = usernameInput.text.ToString();
 
         NetworkManager.Singleton.StartHost();
 
         Debug.Log($"[Host] Hosting on {hostIp}:{port}");
+        networkMode = "LAN";
+        joinIP = hostIp;
+        joinPort = port.ToString();
+
+        GameDebugStuff();
 
         NetworkManager.Singleton.SceneManager.LoadScene("MP_VOX_TEST", UnityEngine.SceneManagement.LoadSceneMode.Single);
 
-        var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-        playerObject.transform.position = spawnPosition;
+        NetworkManager.Singleton.OnClientConnectedCallback += id =>
+        {
+            if (id == NetworkManager.Singleton.LocalClientId)
+            {
+                var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+                if (playerObject != null)
+                    playerObject.transform.position = spawnPosition;
+            }
+        };
     }
 
     public void ClientClickedLAN(string ipInput, string portInput)
@@ -61,7 +77,7 @@ public class MenuNetworker : MonoBehaviour
         string ip = string.IsNullOrEmpty(ipInput) ? "127.0.0.1" : ipInput;
         ushort port = ushort.TryParse(portInput, out ushort parsedPort) ? parsedPort : (ushort)7777;
 
-        ntwk.SetConnectionData(ip, port);
+        transport.SetConnectionData(ip, port);
 
         MenuNetworkerCachedUsername.Value = usernameInput.text.ToString();
 
@@ -108,16 +124,25 @@ public class MenuNetworker : MonoBehaviour
         joinCode = await RelayService.Instance.GetJoinCodeAsync(a.AllocationId);
         Debug.Log(joinCode);
 
-        _transport.SetHostRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port, a.AllocationIdBytes, a.Key, a.ConnectionData);
+        transport.SetHostRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port, a.AllocationIdBytes, a.Key, a.ConnectionData);
 
         NetworkManager.Singleton.StartHost();
 
         NetworkManager.Singleton.SceneManager.LoadScene("MP_VOX_TEST", UnityEngine.SceneManagement.LoadSceneMode.Single);
 
-        var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-        playerObject.transform.position = spawnPosition;
+        networkMode = "Online";
 
         GameDebugStuff();
+
+        NetworkManager.Singleton.OnClientConnectedCallback += id =>
+        {
+            if (id == NetworkManager.Singleton.LocalClientId)
+            {
+                var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
+                if (playerObject != null)
+                    playerObject.transform.position = spawnPosition;
+            }
+        };
     }
 
     public async void JoinGame(string joinInput)
@@ -126,7 +151,7 @@ public class MenuNetworker : MonoBehaviour
 
         JoinAllocation a = await RelayService.Instance.JoinAllocationAsync(joinInput);
 
-        _transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port,
+        transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port,
             a.AllocationIdBytes, a.Key, a.ConnectionData, a.HostConnectionData);
 
         NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
@@ -148,6 +173,13 @@ public class MenuNetworker : MonoBehaviour
     {
         debugKey = "Host" + AuthenticationService.Instance.PlayerId;
 
+        if (networkMode == "LAN") joinCode = "NULL";
+        else if (networkMode == "Online")
+        {
+            joinIP = "NULL";
+            joinPort = "NULL";
+        }
+
         GameDebugRegistry.Register(debugKey, BuildSection);
     }
 
@@ -163,7 +195,10 @@ public class MenuNetworker : MonoBehaviour
         root.Children.Add(new DebugSection(
             debugKey + "_details",
             "Details",
-            $"Join Code: {joinCode}",
+            $"Network Mode: {networkMode}\n" +
+            $"Join Code: {joinCode}\n" +
+            $"LAN IP Address: {joinIP}\n" +
+            $"LAN Port: {joinPort}",
             0
         ));
 
