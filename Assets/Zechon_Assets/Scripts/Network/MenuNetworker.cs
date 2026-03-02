@@ -57,6 +57,8 @@ public class MenuNetworker : MonoBehaviour
         joinIP = hostIp;
         joinPort = port.ToString();
 
+        NetworkSessionManager.Instance.SetSessionData("N/A", hostIp, port.ToString());
+
         GameDebugStuff();
 
         NetworkManager.Singleton.SceneManager.LoadScene("MP_VOX_TEST", UnityEngine.SceneManagement.LoadSceneMode.Single);
@@ -66,8 +68,10 @@ public class MenuNetworker : MonoBehaviour
             if (id == NetworkManager.Singleton.LocalClientId)
             {
                 var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                if (playerObject != null)
+                if (playerObject != null) 
+                {
                     playerObject.transform.position = spawnPosition;
+                }
             }
         };
     }
@@ -78,6 +82,8 @@ public class MenuNetworker : MonoBehaviour
         ushort port = ushort.TryParse(portInput, out ushort parsedPort) ? parsedPort : (ushort)7777;
 
         transport.SetConnectionData(ip, port);
+
+        NetworkSessionManager.Instance.SetSessionData("N/A", ip, port.ToString());
 
         MenuNetworkerCachedUsername.Value = usernameInput.text.ToString();
 
@@ -132,6 +138,8 @@ public class MenuNetworker : MonoBehaviour
 
         networkMode = "Online";
 
+        NetworkSessionManager.Instance.SetSessionData(joinCode, "N/A", "N/A");
+
         GameDebugStuff();
 
         NetworkManager.Singleton.OnClientConnectedCallback += id =>
@@ -140,7 +148,9 @@ public class MenuNetworker : MonoBehaviour
             {
                 var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
                 if (playerObject != null)
+                {
                     playerObject.transform.position = spawnPosition;
+                }
             }
         };
     }
@@ -153,6 +163,10 @@ public class MenuNetworker : MonoBehaviour
 
         transport.SetClientRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port,
             a.AllocationIdBytes, a.Key, a.ConnectionData, a.HostConnectionData);
+
+        joinCode = joinInput;
+
+        NetworkSessionManager.Instance.SetSessionData(joinCode, "N/A", "N/A");
 
         NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;

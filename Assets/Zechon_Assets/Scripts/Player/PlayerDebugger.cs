@@ -10,7 +10,6 @@ public class PlayerDebugger : NetworkBehaviour
     [SerializeField] private PlayerMovement plyrMovement;
     [SerializeField] private GameObject cameraPivot;
     [SerializeField] private GameObject orientation;
-    [SerializeField] private PlayerLocalInteractionsSetup plyrLocalInteract;
     private PauseMenuHandler pause;
 
     private string debugKey;
@@ -65,15 +64,6 @@ public class PlayerDebugger : NetworkBehaviour
             $"Position: {transform.position}\n" +
             $"Camera Rotation: X {cameraPivot.transform.eulerAngles.x.ToString("+0.00;-0.00")}, Y {orientation.transform.eulerAngles.y.ToString("+0.00;-0.00")}",
             2
-        ));
-
-        root.Children.Add(new DebugSection(
-            debugKey + "_components",
-            "Components",
-            $"Pause Menu\n" +
-            $"\t{plyrLocalInteract.debugString}\n" +
-            $"\tPause Menu Init Time: {plyrLocalInteract.pause_Stopwatch.ToString("+0.00;-0.00")}",
-            3
         ));
 
         return root;

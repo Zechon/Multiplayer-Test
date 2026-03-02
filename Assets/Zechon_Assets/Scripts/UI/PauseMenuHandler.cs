@@ -1,3 +1,4 @@
+using TMPro;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -7,12 +8,13 @@ using UnityEngine.SceneManagement;
 
 public class PauseMenuHandler : MonoBehaviour
 {
+
     [Header("References")]
     [SerializeField] private Canvas pauseCanvas;
     [SerializeField] private PlayerInputHandler input;
     [SerializeField] private Volume volume;
     [SerializeField] private PlayerMovement localPlayer;
-    private MenuNetworker ntwk;
+    private DepthOfField depth;
 
     [Header("Menu Pages")]
     [SerializeField] GameObject Default;
@@ -21,20 +23,30 @@ public class PauseMenuHandler : MonoBehaviour
     [Header("Else")]
     [SerializeField] private string mainMenuName = "";
 
-    private DepthOfField depth;
-
     [Header("Info")]
     public bool paused;
     private bool settingsOpen;
-    public bool setup { get; private set; }
+
+    [Header("Events")]
+    public static PauseMenuHandler Instance { get; private set; }
+    public static System.Action<PauseMenuHandler> OnPauseMenuReady;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     private void Start()
     {
-        setup = false;
+        Setup();
+
+        OnPauseMenuReady?.Invoke(this);
     }
 
     public void Setup()
     {
+        var session = NetworkSessionManager.Instance;
+
         if (input == null) { input = GameObject.FindGameObjectWithTag("Input").GetComponent<PlayerInputHandler>(); }
         if (volume == null) { volume = GameObject.FindGameObjectWithTag("Volume").GetComponent<Volume>(); }
         if (depth == null) { volume.profile.TryGet<DepthOfField>(out depth); }
@@ -55,13 +67,13 @@ public class PauseMenuHandler : MonoBehaviour
         settingsOpen = false;
         Settings.SetActive(false);
 
-        setup = true;
+        Default.transform.GetChild(2).gameObject.transform.GetChild(1).gameObject.GetComponent<TMP_Text>().text = $"Join Code: {session.JoinCode}";
+        Default.transform.GetChild(2).gameObject.transform.GetChild(2).gameObject.GetComponent<TMP_Text>().text = $"Join IP: {session.JoinIP}";
+        Default.transform.GetChild(2).gameObject.transform.GetChild(3).gameObject.GetComponent<TMP_Text>().text = $"Join Port: {session.JoinPort}";
     }
 
     private void Update()
     {
-        if (!setup) return;
-
         if (input.PausePressed && !settingsOpen) { GamePause(); }
         else if (input.PausePressed && settingsOpen) { PauseSettingsToggle(); }
     }

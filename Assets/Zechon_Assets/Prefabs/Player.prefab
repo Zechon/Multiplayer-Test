@@ -254,7 +254,7 @@ GameObject:
   - component: {fileID: 1863719216187353786}
   - component: {fileID: 3955626491633978813}
   - component: {fileID: 31989099289207928}
-  - component: {fileID: 518102246842624709}
+  - component: {fileID: 2287837200587642652}
   - component: {fileID: 4315243165979420650}
   m_Layer: 0
   m_Name: Player
@@ -533,7 +533,7 @@ MonoBehaviour:
         byte0059: 0
         byte0060: 0
         byte0061: 0
---- !u!114 &518102246842624709
+--- !u!114 &2287837200587642652
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -545,10 +545,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78cc23eab9241c14c93acf1071be2cd4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLocalInteractionsSetup
-  pauseMenuInteract: 1
-  pause_Stopwatch: 0
   plyrCamRef: {fileID: 7328608688606387515}
-  debugString: 
+  ntwk: {fileID: 0}
 --- !u!114 &4315243165979420650
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -567,7 +565,6 @@ MonoBehaviour:
   plyrMovement: {fileID: 1863719216187353786}
   cameraPivot: {fileID: 578218042744664516}
   orientation: {fileID: 1586760864466189503}
-  plyrLocalInteract: {fileID: 518102246842624709}
 --- !u!1 &5210747765330572358
 GameObject:
   m_ObjectHideFlags: 0
