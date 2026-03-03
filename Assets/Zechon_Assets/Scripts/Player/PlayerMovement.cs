@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
 public class PlayerMovement : NetworkBehaviour
@@ -69,7 +70,6 @@ public class PlayerMovement : NetworkBehaviour
     private void Update()
     {
         if (!IsOwner) return;
-        if (IsPaused) return;
 
         //Ground Check
         grounded = IsGrounded(out groundHit);
@@ -85,7 +85,9 @@ public class PlayerMovement : NetworkBehaviour
 
     private void HandleMovement()
     {
-        Vector2 moveInput = input.Move;
+        Vector2 moveInput = Vector2.zero;
+
+        if (!IsPaused) moveInput = input.Move;
 
         Vector3 moveDir = orientation.forward * moveInput.y + orientation.right * moveInput.x;
 

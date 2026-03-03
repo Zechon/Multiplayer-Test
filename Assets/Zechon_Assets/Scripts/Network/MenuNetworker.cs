@@ -62,18 +62,6 @@ public class MenuNetworker : MonoBehaviour
         GameDebugStuff();
 
         NetworkManager.Singleton.SceneManager.LoadScene("MP_VOX_TEST", UnityEngine.SceneManagement.LoadSceneMode.Single);
-
-        NetworkManager.Singleton.OnClientConnectedCallback += id =>
-        {
-            if (id == NetworkManager.Singleton.LocalClientId)
-            {
-                var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                if (playerObject != null) 
-                {
-                    playerObject.transform.position = spawnPosition;
-                }
-            }
-        };
     }
 
     public void ClientClickedLAN(string ipInput, string portInput)
@@ -88,15 +76,6 @@ public class MenuNetworker : MonoBehaviour
         MenuNetworkerCachedUsername.Value = usernameInput.text.ToString();
 
         NetworkManager.Singleton.StartClient();
-
-        NetworkManager.Singleton.OnClientConnectedCallback += id =>
-        {
-            if (id == NetworkManager.Singleton.LocalClientId)
-            {
-                var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                playerObject.transform.position = new Vector3(0, 30, 0);
-            }
-        };
     }
 
     public string GetLocalIPAddress()
@@ -141,18 +120,6 @@ public class MenuNetworker : MonoBehaviour
         NetworkSessionManager.Instance.SetSessionData(joinCode, "N/A", "N/A");
 
         GameDebugStuff();
-
-        NetworkManager.Singleton.OnClientConnectedCallback += id =>
-        {
-            if (id == NetworkManager.Singleton.LocalClientId)
-            {
-                var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-                if (playerObject != null)
-                {
-                    playerObject.transform.position = spawnPosition;
-                }
-            }
-        };
     }
 
     public async void JoinGame(string joinInput)
@@ -168,19 +135,7 @@ public class MenuNetworker : MonoBehaviour
 
         NetworkSessionManager.Instance.SetSessionData(joinCode, "N/A", "N/A");
 
-        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-
         NetworkManager.Singleton.StartClient();
-    }
-
-    private void OnClientConnected(ulong id)
-    {
-        if (id == NetworkManager.Singleton.LocalClientId)
-        {
-            var playerObject = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject();
-            playerObject.transform.position = new Vector3(0, 30, 0);
-        }
     }
 
     private void GameDebugStuff()
